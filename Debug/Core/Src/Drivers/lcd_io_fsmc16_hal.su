@@ -1,0 +1,7 @@
+../Core/Src/Drivers/lcd_io_fsmc16_hal.c:51:10:LCD_IO_DmaBusy	4	static
+../Core/Src/Drivers/lcd_io_fsmc16_hal.c:208:6:LCDWriteFillMultiData8and16	32	static
+../Core/Src/Drivers/lcd_io_fsmc16_hal.c:314:6:LCDWriteFillMultiData16to24	32	static
+../Core/Src/Drivers/lcd_io_fsmc16_hal.c:554:6:LCD_Delay	16	static
+../Core/Src/Drivers/lcd_io_fsmc16_hal.c:565:6:LCD_IO_Bl_OnOff	16	static
+../Core/Src/Drivers/lcd_io_fsmc16_hal.c:585:6:LCD_IO_Init	8	static
+../Core/Src/Drivers/lcd_io_fsmc16_hal.c:604:6:LCD_IO_Transaction	24	static

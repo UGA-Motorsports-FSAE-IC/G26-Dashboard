@@ -61,10 +61,10 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define TCH_INTERUPT_Pin GPIO_PIN_1
 #define TCH_INTERUPT_GPIO_Port GPIOC
-#define PAD__Pin GPIO_PIN_1
+#define Sample_LED_Pin GPIO_PIN_1
+#define Sample_LED_GPIO_Port GPIOA
+#define PAD__Pin GPIO_PIN_2
 #define PAD__GPIO_Port GPIOA
-#define PAD_A2_Pin GPIO_PIN_2
-#define PAD_A2_GPIO_Port GPIOA
 #define BTN1_Pin GPIO_PIN_4
 #define BTN1_GPIO_Port GPIOA
 #define BTN2_Pin GPIO_PIN_5
@@ -77,12 +77,10 @@ void Error_Handler(void);
 #define BTN5_GPIO_Port GPIOC
 #define BTN6_Pin GPIO_PIN_5
 #define BTN6_GPIO_Port GPIOC
-#define SPI2_CS_Pin GPIO_PIN_11
-#define SPI2_CS_GPIO_Port GPIOB
-#define LCD_Register_Select_Pin GPIO_PIN_11
-#define LCD_Register_Select_GPIO_Port GPIOD
-#define LCD_Reset_Pin GPIO_PIN_6
-#define LCD_Reset_GPIO_Port GPIOC
+#define TS_CS_Pin GPIO_PIN_11
+#define TS_CS_GPIO_Port GPIOB
+#define LCD_RST_Pin GPIO_PIN_6
+#define LCD_RST_GPIO_Port GPIOC
 #define SDMMC1_MH_Pin GPIO_PIN_3
 #define SDMMC1_MH_GPIO_Port GPIOD
 
