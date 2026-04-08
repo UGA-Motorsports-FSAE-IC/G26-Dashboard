@@ -98,7 +98,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  __HAL_RCC_FMC_CLK_ENABLE();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -117,11 +117,6 @@ int main(void)
   MX_FMC_Init();
   MX_FDCAN2_Init();
   /* USER CODE BEGIN 2 */
-
-  	HAL_GPIO_TogglePin(GPIOA, LCD_RST_Pin);
-    HAL_Delay(50);
-    HAL_GPIO_TogglePin(GPIOA, LCD_RST_Pin);
-    HAL_Delay(50);
 
   /* USER CODE END 2 */
 
@@ -142,10 +137,18 @@ int main(void)
   BSP_LCD_DrawPixel(100, 100, LCD_COLOR_RED);
   */
   BSP_LCD_Init();
+
   while (1)
   {
 	  HAL_GPIO_TogglePin(GPIOA, Sample_LED_Pin);
 	  HAL_Delay(500);
+	  BSP_LCD_Clear(LCD_COLOR_RED);
+	  BSP_LCD_DrawPixel(100, 100, LCD_COLOR_BLUE);
+	  BSP_LCD_DrawPixel(200, 200, LCD_COLOR_BLUE);
+	  HAL_Delay(500);
+	  BSP_LCD_Clear(LCD_COLOR_WHITE);
+	  BSP_LCD_DrawPixel(100, 100, LCD_COLOR_BLUE);
+	  BSP_LCD_DrawPixel(200, 200, LCD_COLOR_BLUE);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -199,13 +202,13 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_D3PCLK1|RCC_CLOCKTYPE_D1PCLK1;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.SYSCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB3CLKDivider = RCC_APB3_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_APB1_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_APB2_DIV2;
   RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
   {
     Error_Handler();
   }
@@ -481,10 +484,10 @@ static void MX_FMC_Init(void)
   hsram1.Init.WriteFifo = FMC_WRITE_FIFO_ENABLE;
   hsram1.Init.PageSize = FMC_PAGE_SIZE_NONE;
   /* Timing */
-  Timing.AddressSetupTime = 10;
+  Timing.AddressSetupTime = 15;
   Timing.AddressHoldTime = 15;
-  Timing.DataSetupTime = 20;
-  Timing.BusTurnAroundDuration = 1;
+  Timing.DataSetupTime = 255;
+  Timing.BusTurnAroundDuration = 15;
   Timing.CLKDivision = 16;
   Timing.DataLatency = 17;
   Timing.AccessMode = FMC_ACCESS_MODE_A;
@@ -609,6 +612,19 @@ void MPU_Config(void)
   MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
   MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
   MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
+
+  HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+  /** Initializes and configures the Region and the memory to be protected
+  */
+  MPU_InitStruct.Number = MPU_REGION_NUMBER1;
+  MPU_InitStruct.BaseAddress = 0x60000000;
+  MPU_InitStruct.Size = MPU_REGION_SIZE_256KB;
+  MPU_InitStruct.SubRegionDisable = 0x0;
+  MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
+  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+  MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
+  MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
 
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
   /* Enables the MPU */

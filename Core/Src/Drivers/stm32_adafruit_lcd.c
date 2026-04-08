@@ -125,10 +125,6 @@ uint8_t BSP_LCD_Init(void)
 { 
   uint8_t ret = LCD_ERROR;
 
-  HAL_GPIO_TogglePin(GPIOA, Sample_LED_Pin);
-  HAL_Delay(500);
-  HAL_GPIO_TogglePin(GPIOA, Sample_LED_Pin);
-  HAL_Delay(500);
   /* LCD Init */   
   lcd_drv->Init();
 
