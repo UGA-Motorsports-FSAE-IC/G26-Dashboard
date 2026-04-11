@@ -51,8 +51,6 @@ TIM_HandleTypeDef htim2;
 
 PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
-DMA_HandleTypeDef hdma_dma_generator0;
-DMA_HandleTypeDef hdma_memtomem_dma1_stream1;
 SRAM_HandleTypeDef hsram1;
 
 /* USER CODE BEGIN PV */
@@ -63,7 +61,6 @@ SRAM_HandleTypeDef hsram1;
 void SystemClock_Config(void);
 static void MPU_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_DMA_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_USB_OTG_FS_PCD_Init(void);
 static void MX_SPI2_Init(void);
@@ -98,7 +95,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  __HAL_RCC_FMC_CLK_ENABLE();
+  //__HAL_RCC_FMC_CLK_ENABLE();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -110,7 +107,6 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_DMA_Init();
   MX_TIM2_Init();
   MX_USB_OTG_FS_PCD_Init();
   MX_SPI2_Init();
@@ -122,33 +118,24 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  /*
-  HAL_GPIO_TogglePin(GPIOA, Sample_LED_Pin);
-  HAL_Delay(500);
-  HAL_GPIO_TogglePin(GPIOA, Sample_LED_Pin);
-  HAL_Delay(500);
-  BSP_LCD_Init();
-  HAL_GPIO_TogglePin(GPIOA, Sample_LED_Pin);
-  HAL_Delay(500);
-  HAL_GPIO_TogglePin(GPIOA, Sample_LED_Pin);
-  HAL_Delay(500);
 
-  BSP_LCD_Clear(LCD_COLOR_WHITE);
-  BSP_LCD_DrawPixel(100, 100, LCD_COLOR_RED);
-  */
   BSP_LCD_Init();
-
   while (1)
   {
 	  HAL_GPIO_TogglePin(GPIOA, Sample_LED_Pin);
-	  HAL_Delay(500);
-	  BSP_LCD_Clear(LCD_COLOR_RED);
-	  BSP_LCD_DrawPixel(100, 100, LCD_COLOR_BLUE);
-	  BSP_LCD_DrawPixel(200, 200, LCD_COLOR_BLUE);
-	  HAL_Delay(500);
+	  HAL_Delay(2000);
+	  BSP_LCD_Clear(LCD_COLOR_BLUE);
+	  HAL_Delay(2000);
+	  BSP_LCD_Clear(LCD_COLOR_GREEN);
+	  BSP_LCD_DrawHLine(0, 0, 100);
+	  BSP_LCD_DrawVLine(0, 0, 100);
+	  HAL_Delay(2000);
 	  BSP_LCD_Clear(LCD_COLOR_WHITE);
-	  BSP_LCD_DrawPixel(100, 100, LCD_COLOR_BLUE);
-	  BSP_LCD_DrawPixel(200, 200, LCD_COLOR_BLUE);
+	  HAL_Delay(1000);
+	  //BSP_LCD_DisplayStringAt(0, 0, (uint8_t *)"Hello", 0x01);
+	  //HAL_Delay(5000);
+	  //BSP_LCD_DrawPixel(0, 10, LCD_COLOR_RED);
+	  //HAL_Delay(2000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -183,7 +170,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 2;
-  RCC_OscInitStruct.PLL.PLLN = 12;
+  RCC_OscInitStruct.PLL.PLLN = 15;
   RCC_OscInitStruct.PLL.PLLP = 2;
   RCC_OscInitStruct.PLL.PLLQ = 3;
   RCC_OscInitStruct.PLL.PLLR = 2;
@@ -202,13 +189,13 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_D3PCLK1|RCC_CLOCKTYPE_D1PCLK1;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.SYSCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB3CLKDivider = RCC_APB3_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_APB1_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_APB2_DIV2;
   RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -400,55 +387,6 @@ static void MX_USB_OTG_FS_PCD_Init(void)
 
 }
 
-/**
-  * Enable DMA controller clock
-  * Configure DMA for memory to memory transfers
-  *   hdma_dma_generator0
-  *   hdma_memtomem_dma1_stream1
-  */
-static void MX_DMA_Init(void)
-{
-
-  /* DMA controller clock enable */
-  __HAL_RCC_DMA1_CLK_ENABLE();
-
-  /* Configure DMA request hdma_dma_generator0 on DMA1_Stream0 */
-  hdma_dma_generator0.Instance = DMA1_Stream0;
-  hdma_dma_generator0.Init.Request = DMA_REQUEST_GENERATOR0;
-  hdma_dma_generator0.Init.Direction = DMA_PERIPH_TO_MEMORY;
-  hdma_dma_generator0.Init.PeriphInc = DMA_PINC_DISABLE;
-  hdma_dma_generator0.Init.MemInc = DMA_MINC_ENABLE;
-  hdma_dma_generator0.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
-  hdma_dma_generator0.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
-  hdma_dma_generator0.Init.Mode = DMA_NORMAL;
-  hdma_dma_generator0.Init.Priority = DMA_PRIORITY_LOW;
-  hdma_dma_generator0.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-  if (HAL_DMA_Init(&hdma_dma_generator0) != HAL_OK)
-  {
-    Error_Handler( );
-  }
-
-  /* Configure DMA request hdma_memtomem_dma1_stream1 on DMA1_Stream1 */
-  hdma_memtomem_dma1_stream1.Instance = DMA1_Stream1;
-  hdma_memtomem_dma1_stream1.Init.Request = DMA_REQUEST_MEM2MEM;
-  hdma_memtomem_dma1_stream1.Init.Direction = DMA_MEMORY_TO_MEMORY;
-  hdma_memtomem_dma1_stream1.Init.PeriphInc = DMA_PINC_ENABLE;
-  hdma_memtomem_dma1_stream1.Init.MemInc = DMA_MINC_ENABLE;
-  hdma_memtomem_dma1_stream1.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
-  hdma_memtomem_dma1_stream1.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
-  hdma_memtomem_dma1_stream1.Init.Mode = DMA_NORMAL;
-  hdma_memtomem_dma1_stream1.Init.Priority = DMA_PRIORITY_LOW;
-  hdma_memtomem_dma1_stream1.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
-  hdma_memtomem_dma1_stream1.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_FULL;
-  hdma_memtomem_dma1_stream1.Init.MemBurst = DMA_MBURST_SINGLE;
-  hdma_memtomem_dma1_stream1.Init.PeriphBurst = DMA_PBURST_SINGLE;
-  if (HAL_DMA_Init(&hdma_memtomem_dma1_stream1) != HAL_OK)
-  {
-    Error_Handler( );
-  }
-
-}
-
 /* FMC initialization function */
 static void MX_FMC_Init(void)
 {
@@ -484,10 +422,10 @@ static void MX_FMC_Init(void)
   hsram1.Init.WriteFifo = FMC_WRITE_FIFO_ENABLE;
   hsram1.Init.PageSize = FMC_PAGE_SIZE_NONE;
   /* Timing */
-  Timing.AddressSetupTime = 15;
+  Timing.AddressSetupTime = 1;
   Timing.AddressHoldTime = 15;
-  Timing.DataSetupTime = 255;
-  Timing.BusTurnAroundDuration = 15;
+  Timing.DataSetupTime = 3;
+  Timing.BusTurnAroundDuration = 2;
   Timing.CLKDivision = 16;
   Timing.DataLatency = 17;
   Timing.AccessMode = FMC_ACCESS_MODE_A;

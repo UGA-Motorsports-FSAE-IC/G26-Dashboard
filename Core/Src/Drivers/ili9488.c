@@ -321,7 +321,7 @@ void ili9488_Init(void)
   LCD_IO_WriteCmd8MultipleData8(ILI9488_FRMCTR1, (uint8_t *)"\xA0", 1); // Frame rate (60Hz)
   LCD_IO_WriteCmd8MultipleData8(ILI9488_INVCTR, (uint8_t *)"\x02", 1);  // Display Inversion Control (2-dot)
   LCD_IO_WriteCmd8MultipleData8(ILI9488_DFUNCTR, (uint8_t *)"\x02\x02", 2); // Display Function Control RGB/MCU Interface Control
-  LCD_IO_WriteCmd8MultipleData8(ILI9488_IMGFUNCT, (uint8_t *)"\x01", 1); // Set Image Functio (Disable 24 bit data)
+  LCD_IO_WriteCmd8MultipleData8(ILI9488_IMGFUNCT, (uint8_t *)"\x01", 1); // Set Image Function (Disable 24 bit data)
   LCD_IO_WriteCmd8MultipleData8(ILI9488_ADJCTR3, (uint8_t *)"\xA9\x51\x2C\x82", 4); // Adjust Control (D7 stream, loose)
   LCD_Delay(5);
   LCD_IO_WriteCmd8MultipleData8(ILI9488_SLPOUT, NULL, 0); // Exit Sleep

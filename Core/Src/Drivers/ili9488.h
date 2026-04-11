@@ -9,7 +9,7 @@
    - 1: 480x320 micro-sd in the left (landscape)
    - 2: 320x480 micro-sd in the bottom (portrait)
    - 3: 480x320 micro-sd in the right (landscape) */
-#define ILI9488_ORIENTATION   0
+#define ILI9488_ORIENTATION   2
 
 /* To clear the screen before display turning on ?
    - 0: does not clear
