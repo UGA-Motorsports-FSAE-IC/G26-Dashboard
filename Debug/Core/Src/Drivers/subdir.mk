@@ -5,19 +5,19 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../Core/Src/Drivers/ili9488.c \
+../Core/Src/Drivers/ili9486.c \
 ../Core/Src/Drivers/lcd_io_fsmc16_hal.c \
 ../Core/Src/Drivers/stm32_adafruit_lcd.c \
 ../Core/Src/Drivers/stm32_adafruit_ts.c 
 
 C_DEPS += \
-./Core/Src/Drivers/ili9488.d \
+./Core/Src/Drivers/ili9486.d \
 ./Core/Src/Drivers/lcd_io_fsmc16_hal.d \
 ./Core/Src/Drivers/stm32_adafruit_lcd.d \
 ./Core/Src/Drivers/stm32_adafruit_ts.d 
 
 OBJS += \
-./Core/Src/Drivers/ili9488.o \
+./Core/Src/Drivers/ili9486.o \
 ./Core/Src/Drivers/lcd_io_fsmc16_hal.o \
 ./Core/Src/Drivers/stm32_adafruit_lcd.o \
 ./Core/Src/Drivers/stm32_adafruit_ts.o 
@@ -30,7 +30,7 @@ Core/Src/Drivers/%.o Core/Src/Drivers/%.su Core/Src/Drivers/%.cyclo: ../Core/Src
 clean: clean-Core-2f-Src-2f-Drivers
 
 clean-Core-2f-Src-2f-Drivers:
-	-$(RM) ./Core/Src/Drivers/ili9488.cyclo ./Core/Src/Drivers/ili9488.d ./Core/Src/Drivers/ili9488.o ./Core/Src/Drivers/ili9488.su ./Core/Src/Drivers/lcd_io_fsmc16_hal.cyclo ./Core/Src/Drivers/lcd_io_fsmc16_hal.d ./Core/Src/Drivers/lcd_io_fsmc16_hal.o ./Core/Src/Drivers/lcd_io_fsmc16_hal.su ./Core/Src/Drivers/stm32_adafruit_lcd.cyclo ./Core/Src/Drivers/stm32_adafruit_lcd.d ./Core/Src/Drivers/stm32_adafruit_lcd.o ./Core/Src/Drivers/stm32_adafruit_lcd.su ./Core/Src/Drivers/stm32_adafruit_ts.cyclo ./Core/Src/Drivers/stm32_adafruit_ts.d ./Core/Src/Drivers/stm32_adafruit_ts.o ./Core/Src/Drivers/stm32_adafruit_ts.su
+	-$(RM) ./Core/Src/Drivers/ili9486.cyclo ./Core/Src/Drivers/ili9486.d ./Core/Src/Drivers/ili9486.o ./Core/Src/Drivers/ili9486.su ./Core/Src/Drivers/lcd_io_fsmc16_hal.cyclo ./Core/Src/Drivers/lcd_io_fsmc16_hal.d ./Core/Src/Drivers/lcd_io_fsmc16_hal.o ./Core/Src/Drivers/lcd_io_fsmc16_hal.su ./Core/Src/Drivers/stm32_adafruit_lcd.cyclo ./Core/Src/Drivers/stm32_adafruit_lcd.d ./Core/Src/Drivers/stm32_adafruit_lcd.o ./Core/Src/Drivers/stm32_adafruit_lcd.su ./Core/Src/Drivers/stm32_adafruit_ts.cyclo ./Core/Src/Drivers/stm32_adafruit_ts.d ./Core/Src/Drivers/stm32_adafruit_ts.o ./Core/Src/Drivers/stm32_adafruit_ts.su
 
 .PHONY: clean-Core-2f-Src-2f-Drivers
 
