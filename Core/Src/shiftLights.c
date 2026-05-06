@@ -8,7 +8,7 @@
 #include "shiftLights.h"
 
 volatile int datasentflag;
-extern TIM_HandleTypeDef htim4;
+extern TIM_HandleTypeDef htim2;
 
 
 void setColor(TIM_HandleTypeDef *htim, uint32_t Channel, uint8_t green, uint8_t red,
@@ -22,9 +22,9 @@ void setColor(TIM_HandleTypeDef *htim, uint32_t Channel, uint8_t green, uint8_t 
     for (int i = index; i < (index + 3); i++) {
     	for (int j = 0; j < 8; j++) {
     		if ((ledcolors[i] << j) & 128) {
-    			ledbytes[(i * 8) + j] = 90;
+    			ledbytes[(i * 8) + j] = 84;
     		} else {
-   			ledbytes[(i * 8) + j] = 30;
+   			ledbytes[(i * 8) + j] = 42;
     		}
     	}
     }
@@ -46,9 +46,9 @@ void shiftLightsInit(TIM_HandleTypeDef *htim, uint32_t Channel, uint8_t *ledcolo
 	for (int i = 0; i < 48; i++) {
 		for (int j = 0; j < 8; j++) {
 			if ((ledcolors[i] << j) & 128) {
-				ledbytes[(i * 8) + j] = 90;
+				ledbytes[(i * 8) + j] = 84;
 			} else {
-				ledbytes[(i * 8) + j] = 30;
+				ledbytes[(i * 8) + j] = 42;
 			}
 		}
 	}
@@ -56,7 +56,10 @@ void shiftLightsInit(TIM_HandleTypeDef *htim, uint32_t Channel, uint8_t *ledcolo
 		ledbytes[i] = 0;
 	}
 
+	TIM2->EGR = TIM_EGR_UG;
 
+	// 2. Clear the stale status flags that just got set
+	TIM2->SR = 0;
 	// Start DMA
 	SCB_CleanDCache_by_Addr((uint32_t*)ledbytes, (PWM_BUFFER_SIZE + 150) * sizeof(uint16_t));
 	HAL_TIM_PWM_Start_DMA(htim, Channel, (uint32_t *)ledbytes, PWM_BUFFER_SIZE + 150);

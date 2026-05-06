@@ -113,7 +113,6 @@ int main(void)
   MX_FDCAN1_Init();
   MX_FMC_Init();
   MX_SPI2_Init();
-  MX_TIM4_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
@@ -135,9 +134,9 @@ int main(void)
   //BSP_LCD_Init();
   while (1)
   {
-	  shiftLightsInit(&htim4, TIM_CHANNEL_1, ledcolors, ledbytes);
+	  shiftLightsInit(&htim2, TIM_CHANNEL_1, ledcolors, ledbytes);
 	  HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
-	  HAL_Delay(100);
+	  HAL_Delay(500);
 
 	  //BSP_LCD_Clear(LCD_COLOR_BLUE);
 	  //HAL_Delay(2000);
