@@ -20,7 +20,6 @@
 #include "main.h"
 #include "dma.h"
 #include "fdcan.h"
-#include "memorymap.h"
 #include "spi.h"
 #include "tim.h"
 #include "usb_otg.h"
@@ -113,8 +112,8 @@ int main(void)
   MX_FDCAN1_Init();
   MX_FMC_Init();
   MX_SPI2_Init();
-  MX_TIM2_Init();
   MX_TIM4_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -286,8 +285,7 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.
