@@ -114,6 +114,7 @@ int main(void)
   MX_FMC_Init();
   MX_SPI2_Init();
   MX_TIM2_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
