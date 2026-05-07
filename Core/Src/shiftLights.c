@@ -8,7 +8,7 @@
 #include "shiftLights.h"
 
 volatile int datasentflag;
-extern TIM_HandleTypeDef htim2;
+extern TIM_HandleTypeDef htim5;
 
 
 void setColor(TIM_HandleTypeDef *htim, uint32_t Channel, uint8_t green, uint8_t red,
