@@ -19,8 +19,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "dma.h"
-#include "fdcan.h"
-#include "spi.h"
 #include "tim.h"
 #include "usb_otg.h"
 #include "gpio.h"
@@ -57,7 +55,6 @@
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-void PeriphCommonClock_Config(void);
 static void MPU_Config(void);
 /* USER CODE BEGIN PFP */
 
@@ -65,7 +62,7 @@ static void MPU_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-__attribute__((section(".dma_buffer"), aligned(32))) uint16_t ledbytes[(16 * 24) + 150];
+uint32_t ledbytes[(16 * 24) + 150] __attribute__((section(".nocache")));;
 /* USER CODE END 0 */
 
 /**
@@ -102,9 +99,6 @@ int main(void)
   /* Configure the system clock */
   SystemClock_Config();
 
-  /* Configure the peripherals common clocks */
-  PeriphCommonClock_Config();
-
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
@@ -113,12 +107,10 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_USB_OTG_FS_PCD_Init();
-  MX_FDCAN1_Init();
+  MX_TIM2_Init();
   MX_FMC_Init();
-  MX_SPI2_Init();
-  MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_SetFMCMemorySwappingConfig(FMC_SWAPBMAP_SDRAM_SRAM);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -134,16 +126,18 @@ int main(void)
   lightOn(&htim2, TIM_CHANNEL_3, ledcolors, ledbytes, 14);
   lightOn(&htim2, TIM_CHANNEL_3, ledcolors, ledbytes, 15);
   */
-  //BSP_LCD_Init();
+  BSP_LCD_Init();
+  shiftLightsInit(&htim2, TIM_CHANNEL_1, ledcolors, ledbytes);
+  startUp(&htim2, TIM_CHANNEL_1, ledcolors, ledbytes);
   while (1)
   {
-	  shiftLightsInit(&htim5, TIM_CHANNEL_1, ledcolors, ledbytes);
+
 	  HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
 	  HAL_Delay(500);
 
-	  //BSP_LCD_Clear(LCD_COLOR_BLUE);
-	  //HAL_Delay(2000);
-	  //BSP_LCD_Clear(LCD_COLOR_GREEN);
+	  BSP_LCD_Clear(LCD_COLOR_BLUE);
+	  HAL_Delay(2000);
+	  BSP_LCD_Clear(LCD_COLOR_GREEN);
 	  /*
 	  BSP_LCD_DrawHLine(0, 0, 100);
 	  BSP_LCD_DrawVLine(0, 0, 100);
@@ -221,33 +215,6 @@ void SystemClock_Config(void)
   }
 }
 
-/**
-  * @brief Peripherals Common Clock Configuration
-  * @retval None
-  */
-void PeriphCommonClock_Config(void)
-{
-  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
-
-  /** Initializes the peripherals clock
-  */
-  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_FMC|RCC_PERIPHCLK_FDCAN;
-  PeriphClkInitStruct.PLL2.PLL2M = 2;
-  PeriphClkInitStruct.PLL2.PLL2N = 12;
-  PeriphClkInitStruct.PLL2.PLL2P = 2;
-  PeriphClkInitStruct.PLL2.PLL2Q = 4;
-  PeriphClkInitStruct.PLL2.PLL2R = 2;
-  PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2VCIRANGE_3;
-  PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2VCOMEDIUM;
-  PeriphClkInitStruct.PLL2.PLL2FRACN = 0;
-  PeriphClkInitStruct.FmcClockSelection = RCC_FMCCLKSOURCE_PLL2;
-  PeriphClkInitStruct.FdcanClockSelection = RCC_FDCANCLKSOURCE_PLL2;
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
-}
-
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
@@ -264,40 +231,19 @@ void MPU_Config(void)
   /** Initializes and configures the Region and the memory to be protected
   */
   MPU_InitStruct.Enable = MPU_REGION_ENABLE;
-  MPU_InitStruct.Number = MPU_REGION_NUMBER0;
-  MPU_InitStruct.BaseAddress = 0x00;
-  MPU_InitStruct.Size = MPU_REGION_SIZE_4GB;
-  MPU_InitStruct.SubRegionDisable = 0x87;
+  MPU_InitStruct.BaseAddress = 0x38000000;
+  MPU_InitStruct.Size = MPU_REGION_SIZE_32KB;
+  MPU_InitStruct.SubRegionDisable = 0x0;
   MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
   MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
   MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
-  MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
-  MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
-  MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
-
-  HAL_MPU_ConfigRegion(&MPU_InitStruct);
-
-  /** Initializes and configures the Region and the memory to be protected
-  */
-  MPU_InitStruct.Number = MPU_REGION_NUMBER1;
-  MPU_InitStruct.BaseAddress = 0x60000000;
-  MPU_InitStruct.Size = MPU_REGION_SIZE_64MB;
-  MPU_InitStruct.SubRegionDisable = 0x0;
-  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
   MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
+  MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
   MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
 
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
-
-  /** Initializes and configures the Region and the memory to be protected
-  */
-  MPU_InitStruct.Number = MPU_REGION_NUMBER2;
-  MPU_InitStruct.BaseAddress = 0x24000000;
-  MPU_InitStruct.Size = MPU_REGION_SIZE_32KB;
-
-  HAL_MPU_ConfigRegion(&MPU_InitStruct);
   /* Enables the MPU */
-  HAL_MPU_Enable(MPU_HFNMI_PRIVDEF);
+  HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
 
 }
 

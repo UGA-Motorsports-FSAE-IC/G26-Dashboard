@@ -1,6 +1,6 @@
-../Core/Src/shiftLights.c:14:6:setColor	56	static,ignoring_inline_asm
-../Core/Src/shiftLights.c:40:6:shiftLightsInit	56	static,ignoring_inline_asm
-../Core/Src/shiftLights.c:75:6:HAL_TIM_PWM_PulseFinishedCallback	16	static
-../Core/Src/shiftLights.c:81:6:UpdateShiftLights	48	static
-../Core/Src/shiftLights.c:99:6:lightOn	40	static
-../Core/Src/shiftLights.c:118:6:startUp	56	static
+../Core/Src/shiftLights.c:15:6:setColor	40	static
+../Core/Src/shiftLights.c:47:6:shiftLightsInit	40	static
+../Core/Src/shiftLights.c:80:6:HAL_TIM_PWM_PulseFinishedCallback	16	static
+../Core/Src/shiftLights.c:88:6:UpdateShiftLights	48	static
+../Core/Src/shiftLights.c:114:6:lightOn	40	static
+../Core/Src/shiftLights.c:149:6:startUp	56	static

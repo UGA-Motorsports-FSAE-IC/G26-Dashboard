@@ -173,6 +173,13 @@ SECTIONS
     libm.a ( * )
     libgcc.a ( * )
   }
+  
+  .nocache(NOLOAD) :
+  {
+  	. = ALIGN(32);
+  	*(.nocache)
+  	
+  } > RAM_D3
 
   .ARM.attributes 0 : { *(.ARM.attributes) }
 }
