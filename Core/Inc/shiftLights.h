@@ -20,6 +20,9 @@ void LightsStartUpSequence();
 void setColor(TIM_HandleTypeDef *htim, uint32_t Channel, uint8_t green, uint8_t red,
 		uint8_t blue, uint8_t *ledcolors, uint32_t *ledbytes, int ledIndex);
 
+void setColorAll(TIM_HandleTypeDef *htim, uint32_t Channel, uint8_t green, uint8_t red,
+		uint8_t blue, uint8_t *ledcolors, uint32_t *ledbytes);
+
 void shiftLightsInit(TIM_HandleTypeDef *htim, uint32_t Channel, uint8_t *ledcolors, uint32_t *ledbytes);
 
 void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim);

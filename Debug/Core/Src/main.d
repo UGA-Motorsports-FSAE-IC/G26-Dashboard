@@ -19,6 +19,7 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_dma.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_dma_ex.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_mdma.h \
+ ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_dma2d.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_exti.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_cortex.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_flash.h \
@@ -35,8 +36,12 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_pcd.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_ll_usb.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_pcd_ex.h \
- ../Core/Inc/dma.h ../Core/Inc/main.h ../Core/Inc/tim.h \
- ../Core/Inc/usb_otg.h ../Core/Inc/gpio.h ../Core/Inc/fmc.h \
+ ../USB_DEVICE/App/usb_device.h \
+ ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_def.h \
+ ../USB_DEVICE/Target/usbd_conf.h ../Core/Inc/lcd_io.h \
+ ../Core/Inc/gfxfont.h ../Core/Inc/main.h ../Core/Inc/rpiDisplayShapes.h \
+ ../Core/Inc/FreeMonoBold24pt7b.h ../Core/Inc/FreeSans18pt7b.h \
+ ../Core/Inc/rpiSceneBuilderUser.h \
  C:/Users/cathy/STM32CubeIDE/workspace_1.17.0/G26\ Display/Core/Src/Drivers/stm32_adafruit_lcd.h \
  C:/Users/cathy/STM32CubeIDE/workspace_1.17.0/G26\ Display/Core/Src/Drivers/lcd.h \
  C:/Users/cathy/STM32CubeIDE/workspace_1.17.0/G26\ Display/Core/Src/Drivers/Fonts/fonts.h \
@@ -62,6 +67,7 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_dma.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_dma_ex.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_mdma.h:
+../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_dma2d.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_exti.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_cortex.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_flash.h:
@@ -78,12 +84,16 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_pcd.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_ll_usb.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_pcd_ex.h:
-../Core/Inc/dma.h:
+../USB_DEVICE/App/usb_device.h:
+../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_def.h:
+../USB_DEVICE/Target/usbd_conf.h:
+../Core/Inc/lcd_io.h:
+../Core/Inc/gfxfont.h:
 ../Core/Inc/main.h:
-../Core/Inc/tim.h:
-../Core/Inc/usb_otg.h:
-../Core/Inc/gpio.h:
-../Core/Inc/fmc.h:
+../Core/Inc/rpiDisplayShapes.h:
+../Core/Inc/FreeMonoBold24pt7b.h:
+../Core/Inc/FreeSans18pt7b.h:
+../Core/Inc/rpiSceneBuilderUser.h:
 C:/Users/cathy/STM32CubeIDE/workspace_1.17.0/G26\ Display/Core/Src/Drivers/stm32_adafruit_lcd.h:
 C:/Users/cathy/STM32CubeIDE/workspace_1.17.0/G26\ Display/Core/Src/Drivers/lcd.h:
 C:/Users/cathy/STM32CubeIDE/workspace_1.17.0/G26\ Display/Core/Src/Drivers/Fonts/fonts.h:

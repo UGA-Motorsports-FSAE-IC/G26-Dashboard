@@ -1,0 +1,381 @@
+/*
+ * rpi-display.c
+ *
+ *  Created on: Mar 10, 2025
+ *      Author: bharg
+ */
+
+#include "rpiDisplayShapes.h"
+
+#include "gfxfont.h"
+#include "lcd_io.h"
+#include "../easyusbprintln/easyusbprintln.h"
+#include <string.h>
+
+extern uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
+
+/**
+ * x2 and y2 are included in the pixels, (ex: 0 to 8 includes 0 and 8 so this is 9 pixels)
+ */
+void modifySpace(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) {
+	{
+		uint16_t data[] = {(y1 >> 8) & 0x00FF, y1 & 0x00FF, (y2 >> 8) & 0x00FF, y2 & 0x00FF};
+		commandAndData(0x2A, data, sizeof(data));
+	}
+	{
+		uint16_t data[] = {(x1 >> 8) & 0x00FF, x1 & 0x00FF, (x2 >> 8) & 0x00FF, x2 & 0x00FF};
+		commandAndData(0x2B, data, sizeof(data));
+	}
+}
+
+void fillArea(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) {
+	modifySpace(x, y, x + w, y + h);
+	LCD_FILL_DMA2D(x, y, w, h, color);
+}
+
+void drawHLine(uint16_t x1, uint16_t y1, uint16_t length, uint16_t color) {
+	fillArea(x1, y1, length, 1, color);
+}
+
+void drawVLine(uint16_t x1, uint16_t y1, uint16_t height, uint16_t color) {
+	fillArea(x1, y1, 1, height, color);
+}
+
+void drawPoint(uint16_t x, uint16_t y, uint16_t color) {
+	modifySpace(x, y, x, y);
+	LCD_DRAW_POINT(x, y, color);
+}
+
+void drawPointIntoFramebuffer(uint16_t x, uint16_t y, uint16_t color, uint16_t *framebuffer, uint16_t framewidth, uint16_t xstart) {
+	if ((x >= xstart) && (x < (xstart + framewidth))) {
+		framebuffer[(x - xstart) * SCREEN_HEIGHT + y] = color;
+	}
+}
+
+void getRectCenter(uint16_t *xpos, uint16_t *ypos, uint16_t length, uint16_t height) {
+	*xpos -= (length >> 1);
+	*ypos -= (height >> 1);
+}
+
+void drawRectangleFilled(uint16_t x1, uint16_t y1, uint16_t length, uint16_t height, uint16_t color, uint8_t positioning) {
+	if (positioning & CENTER_OBJECT) {
+		getRectCenter(&x1, &y1, length, height);
+	}
+	fillArea(x1, y1, length, height, color);
+}
+
+void drawRectangleFilledIntoFramebuffer(uint16_t x1, uint16_t y1, uint16_t length, uint16_t height, uint16_t color, uint8_t positioning, uint16_t *framebuffer, uint16_t framewidth, uint16_t xstart) {
+    if (positioning & CENTER_OBJECT) {
+        getRectCenter(&x1, &y1, length, height);
+    }
+
+    for (int y = y1; y < y1 + height; y++) {
+        for (int x = x1; x < x1 + length; x++) {
+
+            if ((x >= xstart) && (x < (xstart + framewidth))) {
+                framebuffer[y * framewidth + (x - xstart)] = color;
+            }
+        }
+    }
+}
+
+void drawRectangleOutline(uint16_t x1, uint16_t y1, uint16_t length, uint16_t height, uint16_t color, uint8_t positioning) {
+	if (positioning & CENTER_OBJECT) {
+		getRectCenter(&x1, &y1, length, height);
+	}
+	drawVLine(x1, y1, height, color);
+	drawVLine(x1 + length, y1, height, color);
+	drawHLine(x1, y1, length, color);
+	drawHLine(x1, y1 + height, length, color);
+}
+
+void drawRectangleOutlineIntoFramebuffer(uint16_t x1, uint16_t y1, uint16_t length, uint16_t height, uint16_t color, uint8_t positioning, uint16_t *framebuffer, uint16_t framewidth, uint16_t xstart) {
+	if (positioning & CENTER_OBJECT) {
+		getRectCenter(&x1, &y1, length, height);
+	}
+	for (int x = x1; x < x1 + length; x++) {
+		for (int y = y1; y < y1 + height; y++) {
+			if ((x >= xstart) & (x < (xstart + framewidth))) {
+				if ((x == x1) | (x == (x1 + length - 1))) {
+					if ((y >= y1) & (y < y1 + height)) {
+							framebuffer[(x - xstart) * SCREEN_HEIGHT + y] = color;
+					}
+				}
+				if ((y == y1) | (y == (y1 + height - 1))) {
+					if ((x >= x1) & (x < (x1 + length))) {
+						framebuffer[(x - xstart) * SCREEN_HEIGHT + y] = color;
+					}
+				}
+			}
+		}
+	}
+}
+
+void getEllipseCorner(uint16_t *x, uint16_t *y, uint16_t length, uint16_t height) {
+	*x += (length >> 1);
+	*y += (height >> 1);
+}
+
+/**
+ * Will check to see if a given point is within a given ellipse. This is used to determine what pixels to draw when shading in ellipse.
+ * @param cx This is the center x
+ * @param cy center y
+ * @param rx radius x
+ * @param ry radius y
+ * @param x x coord to check
+ * @param y y coord to check
+ * @return number that represents where your point lies (< 1 then in ellipse, > 1 then outside ellipse)
+ */
+int checkPointInEllipse(int cx, int cy, int rx, int ry, int x, int y) {
+	int diffx = cx - x;
+	int diffy = cy - y;
+	int result = (diffy*diffy*rx*rx) + (diffx*diffx*ry*ry) - (rx*rx*ry*ry);
+	return result;
+}
+
+/**
+ * draws ellipse at given coordinates based on parameters
+ */
+void drawEllipseFilled(uint16_t x, uint16_t y, uint16_t length, uint16_t height, uint16_t color, uint8_t positioning) {
+	if (!(positioning & CENTER_OBJECT)) {
+		getEllipseCorner(&x, &y, length, height);
+	}
+	int rx = length / 2, ry = height / 2;
+	int startx = x - (length/2), endx = x + (length/2), starty = y - (height/2), endy = y + (height/2);
+	for (int i = startx; i < endx; i++) {
+		for (int j = starty; j < endy; j++) {
+			if (checkPointInEllipse(x, y, rx, ry, i, j) < 0) {
+				int sliceHeight = height - (2 * (j - starty));
+				drawVLine(i, j, sliceHeight, color);
+				break;
+			}
+		}
+	}
+}
+
+void drawEllipseFilledIntoFramebuffer(uint16_t x, uint16_t y, uint16_t length, uint16_t height, uint16_t color, uint8_t positioning, uint16_t *framebuffer, uint16_t framewidth, uint16_t xstart) {
+	if (!(positioning & CENTER_OBJECT)) {
+		getEllipseCorner(&x, &y, length, height);
+	}
+
+	int rx = length / 2, ry = height / 2;
+	int startx = x - (length/2), endx = x + (length/2), starty = y - (height/2), endy = y + (height/2);
+	for (int i = startx; i < endx; i++) {
+		for (int j = starty; j < endy; j++) {
+			if ((i >= xstart) & (i < (xstart + framewidth))) {
+				if (checkPointInEllipse(x, y, rx, ry, i, j) < 0) {
+					framebuffer[(i - xstart) * SCREEN_HEIGHT + j] = color;
+				}
+			} else {
+				break;
+			}
+		}
+	}
+}
+
+void drawEllipseOutline(uint16_t x, uint16_t y, uint16_t length, uint16_t height, uint16_t color, uint8_t positioning) {
+	if (!(positioning & CENTER_OBJECT)) {
+		getEllipseCorner(&x, &y, length, height);
+	}
+
+	int rx = length / 2, ry = height / 2;
+	int startx = x - (length/2), starty = y - (height/2);
+	int lastending = y;
+	for (int i = startx; i < x; i++) {
+		for (int j = lastending; j > starty - 1; j--) {
+			if (checkPointInEllipse(x, y, rx, ry, i, j) > 0) {
+				int lineheight = lastending - j + 1;
+				drawVLine(i, j, lineheight, color); //2nd quadrant
+				drawVLine(i, y + y - j - lineheight, lineheight, color); //3rd quadrant
+				drawVLine(x + x - i, j, lineheight, color); //1st quadrant
+				drawVLine(x + x - i, y + y - j - lineheight, lineheight, color); //4th quadrant
+				lastending = j;
+				break;
+			}
+		}
+	}
+}
+
+void drawEllipseOutlineIntoFramebuffer(uint16_t x, uint16_t y, uint16_t length, uint16_t height, uint16_t color, uint8_t positioning, uint16_t *framebuffer, uint16_t framewidth, uint16_t xstart) {
+	if (!(positioning & CENTER_OBJECT)) {
+		getEllipseCorner(&x, &y, length, height);
+	}
+
+
+	int rx = length / 2, ry = height / 2;
+	int startx = x - (length/2), endx = x + (length/2), starty = y - (height/2), endy = y + (height/2);
+	for (int i = startx; i < endx; i++) {
+		for (int j = starty; j < endy; j++) {
+			if ((i >= xstart) & (i < (xstart + framewidth))) {
+				if ((checkPointInEllipse(x, y, rx, ry, i, j) < 0) && (checkPointInEllipse(x, y, rx - 3, ry - 3, i, j) > 0)) {
+					framebuffer[(i - xstart) * SCREEN_HEIGHT + j] = color;
+				}
+			} else {
+				break;
+			}
+		}
+	}
+}
+
+
+void getStringCenter(uint16_t *currentx, uint16_t *currenty, char *buffer, const GFXfont *font) {
+	char *currentletter = buffer;
+
+	uint16_t totallength = 0;
+	while (*(currentletter)) {
+		GFXglyph *letter = &((font->glyph)[*currentletter - 32]);
+		totallength += (uint16_t)(letter->xAdvance);
+		currentletter++;
+	}
+	*currentx -= totallength / 2;
+	//*currenty += font->yAdvance / 2;
+}
+
+void getStringLeft(uint16_t *currentx, uint16_t *currenty, char *buffer, const GFXfont *font) {
+	char *currentletter = buffer;
+
+	uint16_t totallength = 0;
+	while (*(currentletter)) {
+		GFXglyph *letter = &((font->glyph)[*currentletter - 32]);
+		totallength += (uint16_t)(letter->xAdvance);
+		currentletter++;
+	}
+	*currentx -= totallength;
+	//*currenty += font->yAdvance / 2;
+}
+
+uint16_t drawChar(char letter, const GFXfont *font, uint16_t xpos, uint16_t ypos, uint8_t positioning, uint16_t color) {
+	GFXglyph *toDraw = &((font->glyph)[letter - 32]);
+	int16_t width = toDraw->width, height = toDraw->height;
+	int8_t xo = toDraw->xOffset, yo = toDraw->yOffset;
+	int8_t xadv = (int8_t)toDraw->xAdvance;
+	uint8_t *bitlist = font->bitmap;
+	uint16_t bo = toDraw->bitmapOffset;
+	uint8_t bits = 0;
+	uint8_t bit = 0;
+
+	for (int16_t yy = 0; yy < height; yy++) {
+		for (int16_t xx = 0; xx < width; xx++) {
+			if (!(bit++ & 7)) {
+				bits = bitlist[bo++];
+			}
+			if (bits & 0b10000000) {
+				drawPoint((uint16_t)((int16_t)xpos + xadv - xo - xx), (uint16_t)((int16_t)ypos - yy - yo), color);
+			}
+			bits <<= 1;
+		}
+	}
+
+	return (uint16_t)xadv;
+}
+
+uint16_t getCharXadv(char letter, const GFXfont *font) {
+	GFXglyph *toDraw = &((font->glyph)[letter - 32]);
+	return toDraw->xAdvance;
+}
+
+uint16_t drawCharIntoFramebuffer(char letter, const GFXfont *font, uint16_t color, uint16_t xpos, uint16_t ypos, uint8_t positioning,
+		uint16_t *framebuffer, uint16_t framewidth, uint16_t xstart) {
+	GFXglyph *toDraw = &((font->glyph)[letter - 32]);
+	int16_t width = toDraw->width, height = toDraw->height;
+	int8_t xo = toDraw->xOffset, yo = toDraw->yOffset;
+	int8_t xadv = (int8_t)toDraw->xAdvance;
+	uint8_t *bitlist = font->bitmap;
+	uint16_t bo = toDraw->bitmapOffset;
+	uint8_t bits = 0;
+	uint8_t bit = 0;
+
+	for (int16_t yy = 0; yy < height; yy++) {
+		for (int16_t xx = 0; xx < width; xx++) {
+			if (!(bit++ & 7)) {
+				bits = bitlist[bo++];
+			}
+			if (bits & 0b10000000) {
+				uint16_t pointx = (uint16_t)((int16_t)xpos + xadv - xo - xx);
+				uint16_t pointy = (uint16_t)((int16_t)ypos - yy - yo);
+				if ((pointx >= xstart) & (pointx < (xstart + framewidth))) {
+					if ((pointy < SCREEN_HEIGHT) & (pointy >= 0)) {
+						framebuffer[(pointx - xstart) * SCREEN_HEIGHT + pointy] = color;
+					}
+				}
+			}
+			bits <<= 1;
+		}
+	}
+
+	return (uint16_t)xadv;
+}
+
+uint8_t drawString(char *buffer, const GFXfont *font, uint16_t xpos, uint16_t ypos, uint8_t positioning, uint16_t color) {
+	if (positioning & CENTER_OBJECT) {
+		getStringCenter(&xpos, &ypos, buffer, font);
+	}
+	uint16_t xAdvance = 0;
+	uint16_t buffersize = 0;
+	while (buffer[++buffersize]) {};
+	for (int i = buffersize - 1; i >= 0; i--) {
+		xAdvance += drawChar(buffer[i], font, xpos + xAdvance, ypos, NO_CENTER_OBJECT, color);
+	}
+	return font->yAdvance;
+}
+
+uint16_t drawStringIntoFramebuffer(char* buffer, const GFXfont *font, uint16_t color, uint16_t stringxpos, uint16_t stringypos,
+		uint8_t positioning, uint16_t *framebuffer, uint16_t framewidth, uint16_t xstart) {
+	if (positioning & CENTER_OBJECT) {
+		getStringCenter(&stringxpos, &stringypos, buffer, font);
+	} else if (positioning & LEFTDRAW_OBJECT) {
+		getStringLeft(&stringxpos, &stringypos, buffer, font);
+	}
+	uint16_t xAdvance = 0;
+	uint16_t buffersize = 0;
+	while (buffer[++buffersize]) {};
+	for (int i = buffersize - 1; i >= 0; i--) {
+		if ((stringxpos + xAdvance) > (xstart + framewidth)) {
+			xAdvance += getCharXadv(buffer[i], font);
+			break;
+		}
+		xAdvance += drawCharIntoFramebuffer(buffer[i], font, color, stringxpos + xAdvance, stringypos, NO_CENTER_OBJECT, framebuffer, framewidth, xstart);
+	}
+	return font->yAdvance;
+}
+
+/*
+void drawImageIntoFramebuffer(const char *image, uint16_t length, uint16_t height, uint16_t x, uint16_t y,
+		uint8_t positioning, uint16_t *framebuffer, uint16_t framewidth, uint16_t xstart) {
+	length = 400;
+	height = 215;
+	if (positioning & CENTER_OBJECT) {
+		 getRectCenter(&x, &y, length, height);
+	}
+	FIL newfile;
+	FRESULT fresult = f_open(&newfile, image, FA_READ);
+	if (fresult == FR_OK) {
+		USB_Println("the file was opened good\n");
+	} else {
+		USB_Println("failure to open %s\n", image);
+	}
+	uint16_t readbuffer[height];
+	unsigned int br = 0;
+	for (int xx = x; xx < x + length; xx++) {
+		f_read(&newfile, (void*)readbuffer, sizeof(readbuffer), &br);
+		if ((xx >= xstart) & (xx < (xstart + framewidth))) {
+			for (int i = 0; i < height; i++) {
+				//USB_Println("writing to screen, x:%d, y:%d\n",xx, y + i);
+				int coordinate = ((xx - xstart) * SCREEN_HEIGHT) + y + i;
+				char whatbuffer[20];
+				itoa(coordinate, whatbuffer, 10);
+				strncat(whatbuffer, "\n", 10);
+				CDC_Transmit_FS((uint8_t*)whatbuffer, strlen(whatbuffer));
+				framebuffer[(xx - xstart) * SCREEN_HEIGHT + y + i] = readbuffer[i];
+			}
+		}
+		if (xx > (xstart + framewidth)) {
+			break;
+		}
+	}
+	f_close(&newfile);
+}
+*/
+
+
+

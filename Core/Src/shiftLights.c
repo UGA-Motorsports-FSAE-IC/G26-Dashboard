@@ -44,6 +44,39 @@ void setColor(TIM_HandleTypeDef *htim, uint32_t Channel, uint8_t green, uint8_t 
     datasentflag = 0;
 }
 
+void setColorAll(TIM_HandleTypeDef *htim, uint32_t Channel, uint8_t green, uint8_t red,
+		uint8_t blue, uint8_t *ledcolors, uint32_t *ledbytes) {
+
+	for (int i = 0; i < 48; i += 3) {
+		ledcolors[i] = green;
+		ledcolors[i + 1] = red;
+		ledcolors[i + 2] = blue;
+	}
+
+	for (int i = 0; i < 48; i++) {
+		for (int j = 0; j < 8; j++) {
+
+			if ((ledcolors[i] << j) & 128) {
+				ledbytes[(i * 8) + j] = 168;
+			} else {
+				ledbytes[(i * 8) + j] = 84;
+			}
+		}
+	}
+
+	for (int i = PWM_BUFFER_SIZE; i < (PWM_BUFFER_SIZE + 150); i++) {
+		ledbytes[i] = 0;
+	}
+
+	HAL_TIM_PWM_Start_DMA(htim, Channel,
+			(uint32_t *)ledbytes,
+			PWM_BUFFER_SIZE + 150);
+
+	while (!datasentflag) {}
+
+	datasentflag = 0;
+}
+
 void shiftLightsInit(TIM_HandleTypeDef *htim, uint32_t Channel,
 		uint8_t *ledcolors, uint32_t *ledbytes) {
 

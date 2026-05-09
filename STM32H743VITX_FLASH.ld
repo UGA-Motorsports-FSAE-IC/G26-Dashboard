@@ -180,6 +180,13 @@ SECTIONS
   	*(.nocache)
   	
   } > RAM_D3
+  
+  .screenbuffer(NOLOAD) :
+  {
+  	. = ALIGN(32);
+  	*(.screenbuffer)
+  	
+  } > RAM_D1
 
   .ARM.attributes 0 : { *(.ARM.attributes) }
 }

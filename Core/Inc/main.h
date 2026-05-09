@@ -49,6 +49,8 @@ extern "C" {
 
 /* USER CODE END EM */
 
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -57,24 +59,26 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define TCH_INTERUPT_Pin GPIO_PIN_1
-#define TCH_INTERUPT_GPIO_Port GPIOC
+#define PWR_LED_Pin GPIO_PIN_2
+#define PWR_LED_GPIO_Port GPIOE
 #define PAD__Pin GPIO_PIN_1
 #define PAD__GPIO_Port GPIOA
+#define PAD__EXTI_IRQn EXTI1_IRQn
 #define PAD_A2_Pin GPIO_PIN_2
 #define PAD_A2_GPIO_Port GPIOA
+#define PAD_A2_EXTI_IRQn EXTI2_IRQn
 #define BTN1_Pin GPIO_PIN_4
 #define BTN1_GPIO_Port GPIOA
+#define BTN1_EXTI_IRQn EXTI4_IRQn
 #define BTN2_Pin GPIO_PIN_5
 #define BTN2_GPIO_Port GPIOA
+#define BTN2_EXTI_IRQn EXTI9_5_IRQn
 #define BTN3_Pin GPIO_PIN_6
 #define BTN3_GPIO_Port GPIOA
+#define BTN3_EXTI_IRQn EXTI9_5_IRQn
 #define BTN4_Pin GPIO_PIN_7
 #define BTN4_GPIO_Port GPIOA
-#define BTN5_Pin GPIO_PIN_4
-#define BTN5_GPIO_Port GPIOC
-#define BTN6_Pin GPIO_PIN_5
-#define BTN6_GPIO_Port GPIOC
+#define BTN4_EXTI_IRQn EXTI9_5_IRQn
 #define TS_CS_Pin GPIO_PIN_11
 #define TS_CS_GPIO_Port GPIOB
 #define LCD_RST_Pin GPIO_PIN_6
