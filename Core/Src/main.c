@@ -30,6 +30,7 @@
 #include "stm32_adafruit_lcd.h"
 #include "shiftLights.h"
 #include "rpiDisplayShapes.h"
+#include "data.h"
 #include <stdio.h>
 #include <stdlib.h>
 /* USER CODE END Includes */
@@ -53,6 +54,8 @@
 
 DMA2D_HandleTypeDef hdma2d;
 
+FDCAN_HandleTypeDef hfdcan2;
+
 TIM_HandleTypeDef htim2;
 DMA_HandleTypeDef hdma_tim2_ch1;
 
@@ -64,12 +67,14 @@ SRAM_HandleTypeDef hsram1;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+void PeriphCommonClock_Config(void);
 static void MPU_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_FMC_Init(void);
 static void MX_DMA2D_Init(void);
+static void MX_FDCAN2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -80,18 +85,43 @@ uint8_t ledcolors[48];
 uint32_t ledbytes[(16 * 24) + 150] __attribute__((section(".nocache")));;
 extern uint16_t framebuffer[];
 
-volatile uint8_t pad_event = 0;
+volatile uint32_t err = 0;
+FDCAN_ProtocolStatusTypeDef status;
+
+uint8_t shiftCommand;
+FDCAN_TxHeaderTypeDef txShiftHeader;
+FDCAN_FilterTypeDef canfilter;
+uint8_t txData[8] = {0};
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-    if (GPIO_Pin == PAD__Pin)
-    {
-        pad_event = 1;
-    }
-    else if (GPIO_Pin == PAD_A2_Pin)
-    {
-        pad_event = 2;
-    }
+  if (GPIO_Pin == PAD__Pin)
+  {
+	HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
+	shiftCommand = 1;
+  }
+  else if (GPIO_Pin == PAD_A2_Pin)
+  {
+	HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
+	shiftCommand = 2;
+  }
+}
+
+uint32_t fdcanCallBackMessage;
+uint8_t fdcanRecieved;
+
+void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs) {
+	fdcanRecieved = 1;
+	fdcanCallBackMessage = RxFifo0ITs;
+}
+
+uint32_t error;
+void HAL_FDCAN_ErrorCallback(FDCAN_HandleTypeDef *hfdcan)
+{
+
+
+	error = HAL_FDCAN_GetError(hfdcan);
+
 }
 /* USER CODE END 0 */
 
@@ -129,6 +159,9 @@ int main(void)
   /* Configure the system clock */
   SystemClock_Config();
 
+  /* Configure the peripherals common clocks */
+  PeriphCommonClock_Config();
+
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
@@ -140,67 +173,80 @@ int main(void)
   MX_FMC_Init();
   MX_DMA2D_Init();
   MX_USB_DEVICE_Init();
+  MX_FDCAN2_Init();
   /* USER CODE BEGIN 2 */
+
+  txShiftHeader.Identifier =  200;
+  txShiftHeader.IdType = FDCAN_STANDARD_ID;
+  txShiftHeader.TxFrameType = FDCAN_DATA_FRAME;
+  txShiftHeader.DataLength = FDCAN_DLC_BYTES_8;
+  txShiftHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
+  txShiftHeader.BitRateSwitch = FDCAN_BRS_OFF;
+  txShiftHeader.FDFormat = FDCAN_CLASSIC_CAN;
+  txShiftHeader.MessageMarker = 0;
+
+  canfilter.IdType = FDCAN_STANDARD_ID;
+  canfilter.FilterIndex = 0;
+  canfilter.FilterType = FDCAN_FILTER_MASK;
+  canfilter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+  canfilter.FilterID1 = 0x000;
+  canfilter.FilterID2 = 0x000;
+
+  if (HAL_FDCAN_ConfigFilter(&hfdcan2, &canfilter) != HAL_OK) {
+	  HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
+	  HAL_Delay(2000);
+  }
+
+  if (HAL_FDCAN_Start(&hfdcan2) != HAL_OK) {
+	  setColorAll(&htim2, TIM_CHANNEL_1, 210, 45, 60, ledcolors, ledbytes);
+	  HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
+	  HAL_Delay(2000);
+  }
+
+  if (HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK) {
+	  HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
+	  HAL_Delay(2000);
+  }
+
   HAL_SetFMCMemorySwappingConfig(FMC_SWAPBMAP_SDRAM_SRAM);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
-  //int G1[12] = {500, 3000, 4000, 5000, 6000, 7000, 8000, 8500, 9000, 9500, 10000, 10200};
 
   shiftLightsInit(&htim2, TIM_CHANNEL_1, ledcolors, ledbytes);
   startUp(&htim2, TIM_CHANNEL_1, ledcolors, ledbytes);
+  setColorAll(&htim2, TIM_CHANNEL_1, 2, 10, 2, ledcolors, ledbytes);
 
-  resetScreen();
-  initializeScreen();
-  HAL_Delay(200);
-
-	char result[20];
-	itoa(framebuffer[2], result, 10); //rpm
-	char result2[20] = "null";//temp
-	char result3[20] = "8";//gear
-	char result4[20] = "null"; //battery volt
-	char result5[20] = "null"; //speed
-	settempdata(result2);
-	setgeardata(result3);
-	setrpmdata(result);
-	setbattdata(result4);
-	setspeeddata(result5);
-	domainscreen();
+  lcdInit();
 
   while (1)
   {
-	  //HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
-	  //HAL_Delay(500);  // 500 ms blink rate
-	  if (pad_event == 1) {
-		  setColorAll(&htim2, TIM_CHANNEL_1, 100, 230, 0, ledcolors, ledbytes);
-		  HAL_Delay(100);
-		  setColorAll(&htim2, TIM_CHANNEL_1, 0, 0, 0, ledcolors, ledbytes);
-		  pad_event = 0;
-	  } else if (pad_event == 2) {
-		  setColorAll(&htim2, TIM_CHANNEL_1, 25, 25, 255, ledcolors, ledbytes);
-		  HAL_Delay(100);
-		  setColorAll(&htim2, TIM_CHANNEL_1, 0, 0, 0, ledcolors, ledbytes);
-		  pad_event = 0;
-	  }
 
-
-
+	  if (shiftCommand == 1 || shiftCommand == 2) {
+	      txData[0] = shiftCommand;
+	      if (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txShiftHeader, txData) != HAL_OK) {
+	    	  err = HAL_FDCAN_GetError(&hfdcan2);
+	    	  setColorAll(&htim2, TIM_CHANNEL_1, 20, 255, 20, ledcolors, ledbytes);
+	      }
+	      shiftCommand = 0;
+	    }
+	  shiftCommand = 1;
+	  txData[0] = shiftCommand;
+	  HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txShiftHeader, txData);
+	  HAL_Delay(100);
 
 	  /*
-	  for (int i = 0xFFFF; i > 0; i--) {
-		  fillArea(100, 100, 150, 150, colorsTest+i);
-		  itoa(colorsTest + i, (char*) result, 10);
-		  setrpmdata(result);
-		  domainscreen();
+	  HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txShiftHeader, txData);
+	  HAL_Delay(5000);
+	  HAL_FDCAN_GetProtocolStatus(&hfdcan2, &status);
+	   */
+	  if (fdcanRecieved) {
+		  updateMainData(&hfdcan2, fdcanCallBackMessage);
+		  fdcanRecieved = 0;
 	  }
-	  colorsTest = 0;
-	  itoa(colorsTest, result, 16);
-	  setrpmdata(result);
-	  domainscreen();
-	  */
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -268,6 +314,33 @@ void SystemClock_Config(void)
 }
 
 /**
+  * @brief Peripherals Common Clock Configuration
+  * @retval None
+  */
+void PeriphCommonClock_Config(void)
+{
+  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
+
+  /** Initializes the peripherals clock
+  */
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_FMC|RCC_PERIPHCLK_FDCAN;
+  PeriphClkInitStruct.PLL2.PLL2M = 2;
+  PeriphClkInitStruct.PLL2.PLL2N = 48;
+  PeriphClkInitStruct.PLL2.PLL2P = 2;
+  PeriphClkInitStruct.PLL2.PLL2Q = 26;
+  PeriphClkInitStruct.PLL2.PLL2R = 4;
+  PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2VCIRANGE_3;
+  PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2VCOWIDE;
+  PeriphClkInitStruct.PLL2.PLL2FRACN = 0;
+  PeriphClkInitStruct.FmcClockSelection = RCC_FMCCLKSOURCE_PLL2;
+  PeriphClkInitStruct.FdcanClockSelection = RCC_FDCANCLKSOURCE_PLL2;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/**
   * @brief DMA2D Initialization Function
   * @param None
   * @retval None
@@ -284,7 +357,7 @@ static void MX_DMA2D_Init(void)
   /* USER CODE END DMA2D_Init 1 */
   hdma2d.Instance = DMA2D;
   hdma2d.Init.Mode = DMA2D_R2M;
-  hdma2d.Init.ColorMode = DMA2D_OUTPUT_ARGB4444;
+  hdma2d.Init.ColorMode = DMA2D_OUTPUT_RGB565;
   hdma2d.Init.OutputOffset = 0;
   if (HAL_DMA2D_Init(&hdma2d) != HAL_OK)
   {
@@ -293,6 +366,59 @@ static void MX_DMA2D_Init(void)
   /* USER CODE BEGIN DMA2D_Init 2 */
 
   /* USER CODE END DMA2D_Init 2 */
+
+}
+
+/**
+  * @brief FDCAN2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_FDCAN2_Init(void)
+{
+
+  /* USER CODE BEGIN FDCAN2_Init 0 */
+
+  /* USER CODE END FDCAN2_Init 0 */
+
+  /* USER CODE BEGIN FDCAN2_Init 1 */
+
+  /* USER CODE END FDCAN2_Init 1 */
+  hfdcan2.Instance = FDCAN2;
+  hfdcan2.Init.FrameFormat = FDCAN_FRAME_CLASSIC;
+  hfdcan2.Init.Mode = FDCAN_MODE_NORMAL;
+  hfdcan2.Init.AutoRetransmission = DISABLE;
+  hfdcan2.Init.TransmitPause = DISABLE;
+  hfdcan2.Init.ProtocolException = DISABLE;
+  hfdcan2.Init.NominalPrescaler = 1;
+  hfdcan2.Init.NominalSyncJumpWidth = 2;
+  hfdcan2.Init.NominalTimeSeg1 = 21;
+  hfdcan2.Init.NominalTimeSeg2 = 2;
+  hfdcan2.Init.DataPrescaler = 1;
+  hfdcan2.Init.DataSyncJumpWidth = 2;
+  hfdcan2.Init.DataTimeSeg1 = 21;
+  hfdcan2.Init.DataTimeSeg2 = 2;
+  hfdcan2.Init.MessageRAMOffset = 0;
+  hfdcan2.Init.StdFiltersNbr = 0;
+  hfdcan2.Init.ExtFiltersNbr = 0;
+  hfdcan2.Init.RxFifo0ElmtsNbr = 2;
+  hfdcan2.Init.RxFifo0ElmtSize = FDCAN_DATA_BYTES_8;
+  hfdcan2.Init.RxFifo1ElmtsNbr = 0;
+  hfdcan2.Init.RxFifo1ElmtSize = FDCAN_DATA_BYTES_8;
+  hfdcan2.Init.RxBuffersNbr = 0;
+  hfdcan2.Init.RxBufferSize = FDCAN_DATA_BYTES_8;
+  hfdcan2.Init.TxEventsNbr = 0;
+  hfdcan2.Init.TxBuffersNbr = 0;
+  hfdcan2.Init.TxFifoQueueElmtsNbr = 2;
+  hfdcan2.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
+  hfdcan2.Init.TxElmtSize = FDCAN_DATA_BYTES_8;
+  if (HAL_FDCAN_Init(&hfdcan2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN FDCAN2_Init 2 */
+
+  /* USER CODE END FDCAN2_Init 2 */
 
 }
 
@@ -454,6 +580,9 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LCD_RST_GPIO_Port, LCD_RST_Pin, GPIO_PIN_SET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(LEDTEST_GPIO_Port, LEDTEST_Pin, GPIO_PIN_RESET);
+
   /*Configure GPIO pin : PWR_LED_Pin */
   GPIO_InitStruct.Pin = PWR_LED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -486,6 +615,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LCD_RST_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : LEDTEST_Pin */
+  GPIO_InitStruct.Pin = LEDTEST_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(LEDTEST_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : SDMMC1_MH_Pin */
   GPIO_InitStruct.Pin = SDMMC1_MH_Pin;

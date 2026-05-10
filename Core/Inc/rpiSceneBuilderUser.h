@@ -14,6 +14,8 @@
 extern "C" {
 #endif
 	void domainscreen();
+	void dodatascreen();
+	void initdatascreen();
 	void changebackground(uint16_t color);
 	void setrpmdata(char *rpmvalue);
 	void settempdata(char *tempvalue);

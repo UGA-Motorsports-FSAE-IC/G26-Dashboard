@@ -1,0 +1,3 @@
+..\Core\Src\data.c:29:6:lcdInit	8	static
+..\Core\Src\data.c:41:6:updateMainData	16	static
+..\Core\Src\data.c:49:6:processCAN	72	static

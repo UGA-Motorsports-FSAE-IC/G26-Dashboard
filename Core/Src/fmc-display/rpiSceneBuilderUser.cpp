@@ -14,6 +14,7 @@
 #include "iconFont.h"
 #include "splashimage.h"
 #include <cstring>
+#include <iterator>
 
 char rpmresult[17] = "";
 char tempresult[18] = "";
@@ -24,8 +25,8 @@ char tempicon[3] = " ";
 char batticon[3] = "\"";
 char rpmicon[3] = "#";
 char speedicon[3] = "%";
-DisplayObject* otherobjects[11] = {
-		new StringObject(200, 260, 0xFFFF, FREE_MONO_BOLD_24PT7B, NO_CENTER_OBJECT, rpmresult, 11),
+DisplayObject* otherobjects[10] = {
+		new StringObject(200, 260, 0xFFFF, FREE_MONO_BOLD_24PT7B, NO_CENTER_OBJECT, rpmresult, 1),
 		new StringObject(350, 100, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, tempresult, 3),
 		new StringObject(350, 60, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, battresult, 6),
 		new StringObject(100, 240, 0xFFFF, GEARFONT, CENTER_OBJECT, gearresult, 2),
@@ -35,9 +36,21 @@ DisplayObject* otherobjects[11] = {
 		new StringObject(440, 288, 0xFFFF, ICONFONT, LEFTDRAW_OBJECT, rpmicon, 8),
 		new OutlineRectObject(190, 250, 260, 55, 0xFFFF, NO_CENTER_OBJECT, 9),
 		new StringObject(405, 210, 0xFFFF, ICONFONT, CENTER_OBJECT, speedicon, 10),
-		new FilledRectObject(0, 0, 480, 320, 0xFFFF, CENTER_OBJECT, 1)
 };
-Scene myScene2(otherobjects, 11);
+Scene myScene2(otherobjects, 10);
+
+char rpmresult2[17] = "";
+char oiltempresult2[18] = "";
+char gearresult2[20] = "";
+char battresult2[20] = "";
+char oiltemp2[15] = "Oil Temp:";
+char batt2[15] = "Battery:";
+char rpm2[15] = "RPM:";
+char gear2[15] = "Gear:";
+char* datascreengrid[] = {rpm2, oiltemp2, gear2, batt2};
+char* griddata[] = {rpmresult2, oiltempresult2, gearresult2, battresult2};
+DisplayObject* dataobjects[12];
+Scene myScene3(dataobjects, 12);
 
 char *image = "splash.bin";
 DisplayObject* splashobjects[1] = {
@@ -81,12 +94,40 @@ void setspeeddata(char *speedvalue) {
 }
 
 void domainscreen() {
-	myScene2.setScene(otherobjects, 11);
+	myScene2.setScene(otherobjects, 10);
 	myScene2.drawScene();
+}
+
+void dodatascreen() {
+	myScene3.setScene(dataobjects, 12);
+	myScene3.drawScene();
 }
 
 void dosplashscene() {
 	splashScene.drawScene();
 	splashScene.setScene(splashobjects, 1);
+}
+
+void initdatascreen() {
+	int length = sizeof(datascreengrid) / sizeof(datascreengrid[0]);
+	int x = 0;
+	int y = 0;
+	for(int i = 0; i < length; i++) {
+		dataobjects[i] = new StringObject(x, y, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, datascreengrid[i], i);
+		y += 30;
+	}
+	x = 0;
+	y = 0;
+	for(int i = 0; i < length; i++) {
+		dataobjects[i] = new StringObject(x, y, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, griddata[i], i+length);
+		y += 30;
+	}
+	x = 0;
+	y = 0;
+	for (int i = 8; i < 12; i++) {
+		dataobjects[i] = new OutlineRectObject(x, y, 150, 50, 0xFFFF, NO_CENTER_OBJECT, i);
+		y += 30;
+	}
+	dodatascreen();
 }
 

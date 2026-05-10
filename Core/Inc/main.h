@@ -83,6 +83,8 @@ void Error_Handler(void);
 #define TS_CS_GPIO_Port GPIOB
 #define LCD_RST_Pin GPIO_PIN_6
 #define LCD_RST_GPIO_Port GPIOC
+#define LEDTEST_Pin GPIO_PIN_2
+#define LEDTEST_GPIO_Port GPIOD
 #define SDMMC1_MH_Pin GPIO_PIN_3
 #define SDMMC1_MH_GPIO_Port GPIOD
 
