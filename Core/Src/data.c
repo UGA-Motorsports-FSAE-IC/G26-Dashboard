@@ -1,14 +1,12 @@
-/*
- * shiftLights.c
+/* shiftLights.c
  *
  *  Created on: May 5, 2026
- *      Author: Ryan Main
+ *      Author: ____Ryan____ Main
  */
 
 #include "data.h"
 #include "rpiSceneBuilderUser.h"
 #include "shiftLights.h"
-#include "easyusbprintln.h"
 #include "lcd_io.h"
 #include <string.h>
 #include <stdio.h>
@@ -17,15 +15,12 @@
 extern uint8_t ledcolors[];
 extern uint32_t ledbytes[];
 extern TIM_HandleTypeDef htim2;
-int G1[12] = {500, 3000, 4000, 5000, 6000, 7000, 8000, 8500, 9000, 9500, 10000, 10200};
+int G1[12] = {0, 3000, 4000, 5000, 6000, 7000, 8000, 8500, 9000, 9500, 10000, 10200};
 char rpm[20] = "null";
 char temp[20] = "null";
 char gear[20] = "8";
 char batt[20] = "null";
 char speed[20] = "null";
-
-FDCAN_RxHeaderTypeDef rxHeader;
-uint8_t rxData[64];
 
 extern FDCAN_HandleTypeDef hfdcan2;
 
@@ -36,73 +31,77 @@ extern volatile uint32_t lastSendMs;
 extern uint8_t shiftCommand;
 
 void lcdInit() {
-	resetScreen();
-	initializeScreen();
-	HAL_Delay(200);
-	settempdata(temp, 0xFFFF);
-	setgeardata(gear);
-	setrpmdata(rpm);
-	setbattdata(batt);
-	setspeeddata(speed);
-	domainscreen();
+    resetScreen();
+    initializeScreen();
+    HAL_Delay(200);
+    settempdata(temp, 0xFFFF);
+    setgeardata(gear);
+    setrpmdata(rpm);
+    setbattdata(batt);
+    setspeeddata(speed);
+    domainscreen();
 }
 
-void updateMainData(FDCAN_HandleTypeDef *hfdcan) {
-	while (HAL_FDCAN_GetRxFifoFillLevel(hfdcan, FDCAN_RX_FIFO0) > 0) {
-		HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &rxHeader, rxData);
-		USB_Println("rxData[0]: %d", rxData[0]);
-		processCAN(&rxHeader, rxData);
-	}
-	domainscreen();
+/*
+void updateMainData(FDCAN_HandleTypeDef *__hfdcan__) {
+    while (HAL_FDCAN_GetRxFifoFillLevel(__hfdcan__, FDCAN_RX_FIFO0) > 0) {
+        HAL_FDCAN_GetRxMessage(__hfdcan__, FDCAN_RX_FIFO0, &rxHeader, rxData);
+
+        processCAN(&rxHeader, rxData);
+    }
+    __domainscreen__();
 }
+*/
 
-void processCAN(FDCAN_RxHeaderTypeDef *hdr, uint8_t *data) {
-    switch (hdr->Identifier) {
-        case RPMCANID:
-        	uint16_t rpmVal = ((uint16_t)data[6] << 8) + data[7];
-		    UpdateShiftLights(&htim2, TIM_CHANNEL_1, ledcolors, ledbytes, rpmVal, G1);
-		    itoa(rpmVal, (char*)(rpm), 10);
-		    setrpmdata(rpm);
+void processCAN(int id, uint8_t *data) {
+    switch (id) {
+        case RPMCANID: {
+            uint16_t rpmVal = ((uint16_t)data[6] << 8) + data[7];
+            UpdateShiftLights(&htim2, TIM_CHANNEL_1, ledcolors, ledbytes, rpmVal, G1);
+            itoa(rpmVal, rpm, 10);
+            setrpmdata(rpm);
             break;
+        }
 
-        case SPEEDCANID:
-        	uint16_t speedVal =  ((uint16_t)data[0] << 8) | data[1];
-        	speedVal /= 10;
-		    itoa(speedVal, (char*) speed, 10);
-		    setspeeddata(speed);
-		    break;
-
-        case GEARCANID:
-        	uint8_t gearVal = data[0];
-		    itoa(gearVal, gear, 10);
-		    setgeardata(gear);
+        case SPEEDCANID: {
+            uint16_t speedVal = ((uint16_t)data[0] << 8) | data[1];
+            speedVal /= 10;
+            itoa(speedVal, speed, 10);
+            setspeeddata(speed);
             break;
+        }
 
-        case CLTCANID:
-        	uint16_t tempVal = ((uint16_t)data[6] << 8) + data[7];
-        	tempVal /= 10;
-        	uint16_t color = 0xFFFF;
-			if (tempVal > 215) {
-				color = 0xf8e0;
-			}
-		    itoa(tempVal, temp, 10);
-		    settempdata(temp, color);
-		    break;
+        case GEARCANID: {
+            uint16_t gearVal = ((uint16_t)data[0] << 8) | data[1];
+            itoa(gearVal, gear, 10);
+            setgeardata(gear);
+            break;
+        }
 
-        case BATTERYCANID:
-        	uint16_t battvalue = ((uint16_t)data[2] << 8) + data[3];
-			uint16_t batIntPart = battvalue / 10;
-			uint16_t batDecimalPart = battvalue % 10;
-			char batint[10];
-			char batdec[10];
-			itoa(batIntPart, batint, 10);
-			itoa(batDecimalPart, batdec, 10);
-			strncpy(batt, "", 20);
-			strncat(batt, batint, 5);
-			strncat(batt, ".", 5);
-			strncat(batt, batdec, 1);
-			setbattdata(batt);
-			break;
+        case CLTCANID: {
+            uint16_t tempVal = ((uint16_t)data[6] << 8) + data[7];
+            tempVal /= 10;
+            uint16_t color = (tempVal > 215) ? 0xf8e0 : 0xFFFF;
+            itoa(tempVal, temp, 10);
+            settempdata(temp, color);
+            break;
+        }
+
+        case BATTERYCANID: {
+            uint16_t battvalue = ((uint16_t)data[2] << 8) + data[3];
+            uint16_t batIntPart = battvalue / 10;
+            uint16_t batDecimalPart = battvalue % 10;
+            char batint[10];
+            char batdec[10];
+            itoa(batIntPart, batint, 10);
+            itoa(batDecimalPart, batdec, 10);
+            strncpy(batt, "", 20);
+            strncat(batt, batint, 5);
+            strncat(batt, ".", 5);
+            strncat(batt, batdec, 1);
+            setbattdata(batt);
+            break;
+        }
     }
 }
 

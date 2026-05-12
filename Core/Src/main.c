@@ -32,7 +32,6 @@
 #include "data.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "easyusbprintln.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -89,16 +88,19 @@ volatile uint8_t shiftPending = 0;
 volatile uint32_t lastSendMs = 0;
 uint8_t shiftCommand;
 
+uint8_t button1 = 0;
+uint8_t button2 = 0;
+uint32_t btn1Hit;
+uint32_t btn2Hit;
 uint8_t currentScreen = 0;
-uint8_t commsOn = 0;
-
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   if (GPIO_Pin == PAD__Pin) {
 	// Down Shift
 	shiftPending = 1;
 	shiftCommand = 1;
-  } else if (GPIO_Pin == PAD_A2_Pin) {
+  }
+  else if (GPIO_Pin == PAD_A2_Pin) {
 	// Up Shift
 	shiftPending = 1;
 	shiftCommand = 2;
@@ -106,62 +108,31 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 }
 
 
-
 FDCAN_FilterTypeDef canfilter;
-volatile uint8_t dataRecieved;
-uint8_t RETRY_MS = 10;
 
-volatile uint8_t testprint = 0;
-
+FDCAN_RxHeaderTypeDef rxHeader;
+uint8_t rxData[8];
+volatile uint8_t dataRecieved = 0;
+uint32_t id;
 
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs) {
 
-	dataRecieved = 1;
-}
+  if ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET) {
 
-/*
-void toggleComs() {
-	FDCAN_TxHeaderTypeDef txCommsHeader;
-	uint8_t txData[8] = {0};
-	txData[0] = commsOn;
 
-	txCommsHeader.Identifier = 15;
-	txCommsHeader.IdType = FDCAN_EXTENDED_ID;
-	txCommsHeader.TxFrameType = FDCAN_DATA_FRAME;
-	txCommsHeader.DataLength = FDCAN_DLC_BYTES_8;
-	txCommsHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-	txCommsHeader.BitRateSwitch = FDCAN_BRS_OFF;
-	txCommsHeader.FDFormat = FDCAN_CLASSIC_CAN;
-	txCommsHeader.MessageMarker = 0;
+    HAL_FDCAN_GetRxMessage(&hfdcan2, FDCAN_RX_FIFO0, &rxHeader, rxData);
 
-	HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txCommsHeader, txData);
+    id = rxHeader.Identifier;
+    dataRecieved = 1;
+  }
 }
 
 
-void checkButtons() {
-	int timeDiff = (btn3Hit > btn4Hit) ? (btn3Hit - btn4Hit) : (btn4Hit - btn3Hit);
-	int screenSwitchHandled = 0;
-
-	if (button3 && button4 && timeDiff < 100 && !screenSwitchHandled) {
-	  screenSwitchHandled = 1;
-	  button3 = 0;
-	  button4 = 0;
-	  if (currentScreen == 0) {
-		  initdatascreen();
-		  dodatascreen();
-		  currentScreen = 1;
-	  } else {
-		  lcdInit();
-		  currentScreen = 0;
-	  }
-	} else if (button3) {
-
-	} else {
-		commsOn = !commsOn;
-		toggleComs();
-	}
+// Then in main loop, rxHeader and rxData are already populated
+void updateMainData(void) {
+  processCAN(id, rxData);  // use what the interrupt stored
+  domainscreen();
 }
-*/
 
 /* USER CODE END 0 */
 
@@ -223,11 +194,9 @@ int main(void)
   canfilter.FilterID1 = 0x000;
   canfilter.FilterID2 = 0x000;
 
-  unsigned int configfilterresult = HAL_FDCAN_ConfigFilter(&hfdcan2, &canfilter);
-  unsigned int startresult = HAL_FDCAN_Start(&hfdcan2);
-  unsigned int activatenotificationresult = HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
-
-  USB_Println("config result was %u, startresult was %u, activatenotificationresult was %u\n", configfilterresult, startresult, activatenotificationresult);
+  HAL_FDCAN_ConfigFilter(&hfdcan2, &canfilter);
+  HAL_FDCAN_Start(&hfdcan2);
+  HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
 
   HAL_SetFMCMemorySwappingConfig(FMC_SWAPBMAP_SDRAM_SRAM);
   /* USER CODE END 2 */
@@ -240,27 +209,15 @@ int main(void)
   setColorAll(&htim2, TIM_CHANNEL_1, 0, 0, 0, ledcolors, ledbytes);
 
   lcdInit();
-  int count = 0;
+
   while (1) {
 
-	  USB_Println("Fifo fill level: %d", HAL_FDCAN_GetRxFifoFillLevel(&hfdcan2, FDCAN_RX_FIFO0));
-
-	  if (testprint) {
-		  USB_Println("there was a can interrupt\n");
-	  }
-
-	  if (count > 10000000) {
-		  USB_Println("While loop\n");
-		  count = 0;
-	  }
-	  count++;
 	  if (shiftPending) {
 		FDCAN_TxHeaderTypeDef txShiftHeader;
 		uint8_t txData[8] = {0};
 		txData[0] = shiftCommand;
-		USB_Println("shiftCommand: %d\n", shiftCommand);
 
-		txShiftHeader.Identifier = 8888;
+		txShiftHeader.Identifier = 10;
 		txShiftHeader.IdType = FDCAN_EXTENDED_ID;
 		txShiftHeader.TxFrameType = FDCAN_DATA_FRAME;
 		txShiftHeader.DataLength = FDCAN_DLC_BYTES_8;
@@ -268,14 +225,13 @@ int main(void)
 		txShiftHeader.BitRateSwitch = FDCAN_BRS_OFF;
 		txShiftHeader.FDFormat = FDCAN_CLASSIC_CAN;
 		txShiftHeader.MessageMarker = 0;
-		USB_Println("going to send message...\n");
-		int message = HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txShiftHeader, txData);
-		USB_Println("HAL add message result: %d\n", message);
+
+		HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txShiftHeader, txData);
 		shiftPending = 0;
 	  }
+
 	  if (dataRecieved) {
-		  USB_Println("Data Received\n");
-		  updateMainData(&hfdcan2);
+		  updateMainData();
 		  dataRecieved = 0;
 	  }
 
@@ -424,8 +380,8 @@ static void MX_FDCAN2_Init(void)
   hfdcan2.Init.ProtocolException = DISABLE;
   hfdcan2.Init.NominalPrescaler = 1;
   hfdcan2.Init.NominalSyncJumpWidth = 2;
-  hfdcan2.Init.NominalTimeSeg1 = 21;
-  hfdcan2.Init.NominalTimeSeg2 = 2;
+  hfdcan2.Init.NominalTimeSeg1 = 20;
+  hfdcan2.Init.NominalTimeSeg2 = 3;
   hfdcan2.Init.DataPrescaler = 1;
   hfdcan2.Init.DataSyncJumpWidth = 11;
   hfdcan2.Init.DataTimeSeg1 = 12;
@@ -433,7 +389,7 @@ static void MX_FDCAN2_Init(void)
   hfdcan2.Init.MessageRAMOffset = 0;
   hfdcan2.Init.StdFiltersNbr = 0;
   hfdcan2.Init.ExtFiltersNbr = 1;
-  hfdcan2.Init.RxFifo0ElmtsNbr = 8;
+  hfdcan2.Init.RxFifo0ElmtsNbr = 64;
   hfdcan2.Init.RxFifo0ElmtSize = FDCAN_DATA_BYTES_8;
   hfdcan2.Init.RxFifo1ElmtsNbr = 0;
   hfdcan2.Init.RxFifo1ElmtSize = FDCAN_DATA_BYTES_8;
@@ -441,7 +397,7 @@ static void MX_FDCAN2_Init(void)
   hfdcan2.Init.RxBufferSize = FDCAN_DATA_BYTES_8;
   hfdcan2.Init.TxEventsNbr = 0;
   hfdcan2.Init.TxBuffersNbr = 0;
-  hfdcan2.Init.TxFifoQueueElmtsNbr = 8;
+  hfdcan2.Init.TxFifoQueueElmtsNbr = 32;
   hfdcan2.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
   hfdcan2.Init.TxElmtSize = FDCAN_DATA_BYTES_8;
   if (HAL_FDCAN_Init(&hfdcan2) != HAL_OK)

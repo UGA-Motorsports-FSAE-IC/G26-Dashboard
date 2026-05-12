@@ -26,7 +26,7 @@ void lcdInit();
 
 void updateMainData();
 
-void processCAN(FDCAN_RxHeaderTypeDef *hdr, uint8_t *data);
+void processCAN(int id, uint8_t *data);
 
 void shiftTask(void);
 
