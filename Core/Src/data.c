@@ -8,6 +8,7 @@
 #include "data.h"
 #include "rpiSceneBuilderUser.h"
 #include "shiftLights.h"
+#include "easyusbprintln.h"
 #include "lcd_io.h"
 #include <string.h>
 #include <stdio.h>
@@ -26,11 +27,19 @@ char speed[20] = "null";
 FDCAN_RxHeaderTypeDef rxHeader;
 uint8_t rxData[64];
 
+extern FDCAN_HandleTypeDef hfdcan2;
+
+volatile uint32_t uniqueId = 1;
+uint16_t framesSent = 0;
+extern volatile uint8_t shiftPending;
+extern volatile uint32_t lastSendMs;
+extern uint8_t shiftCommand;
+
 void lcdInit() {
 	resetScreen();
 	initializeScreen();
 	HAL_Delay(200);
-	settempdata(temp);
+	settempdata(temp, 0xFFFF);
 	setgeardata(gear);
 	setrpmdata(rpm);
 	setbattdata(batt);
@@ -38,9 +47,10 @@ void lcdInit() {
 	domainscreen();
 }
 
-void updateMainData(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs) {
+void updateMainData(FDCAN_HandleTypeDef *hfdcan) {
 	while (HAL_FDCAN_GetRxFifoFillLevel(hfdcan, FDCAN_RX_FIFO0) > 0) {
 		HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &rxHeader, rxData);
+		USB_Println("rxData[0]: %d", rxData[0]);
 		processCAN(&rxHeader, rxData);
 	}
 	domainscreen();
@@ -49,41 +59,40 @@ void updateMainData(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs) {
 void processCAN(FDCAN_RxHeaderTypeDef *hdr, uint8_t *data) {
     switch (hdr->Identifier) {
         case RPMCANID:
-        	uint16_t rpmVal = (uint16_t) ((data[6]) << 8) + data[7];
+        	uint16_t rpmVal = ((uint16_t)data[6] << 8) + data[7];
 		    UpdateShiftLights(&htim2, TIM_CHANNEL_1, ledcolors, ledbytes, rpmVal, G1);
 		    itoa(rpmVal, (char*)(rpm), 10);
 		    setrpmdata(rpm);
             break;
 
         case SPEEDCANID:
-        	uint16_t speedVal = (uint16_t) ((data[0] << 8) | data[1]);
+        	uint16_t speedVal =  ((uint16_t)data[0] << 8) | data[1];
         	speedVal /= 10;
 		    itoa(speedVal, (char*) speed, 10);
 		    setspeeddata(speed);
 		    break;
 
         case GEARCANID:
-        	uint16_t gearVal = (uint8_t) (data[6]);
+        	uint8_t gearVal = data[0];
 		    itoa(gearVal, gear, 10);
 		    setgeardata(gear);
             break;
 
         case CLTCANID:
-        	uint16_t tempVal = (uint16_t) (((data[6]) << 8) + data[7]);
+        	uint16_t tempVal = ((uint16_t)data[6] << 8) + data[7];
         	tempVal /= 10;
+        	uint16_t color = 0xFFFF;
 			if (tempVal > 215) {
-		      setColor(&htim2, TIM_CHANNEL_1, 0, 255, 0, ledcolors, ledbytes, 15);
-		    } else {
-			  setColor(&htim2, TIM_CHANNEL_1, 0, 0, 0, ledcolors, ledbytes, 15);
-		    }
+				color = 0xf8e0;
+			}
 		    itoa(tempVal, temp, 10);
-		    settempdata(temp);
+		    settempdata(temp, color);
 		    break;
 
         case BATTERYCANID:
-        	uint8_t battvalue = (uint8_t) (((data[2]) << 8) + data[3]);
-			uint8_t batIntPart = battvalue / 10;
-			uint8_t batDecimalPart = battvalue % 10;
+        	uint16_t battvalue = ((uint16_t)data[2] << 8) + data[3];
+			uint16_t batIntPart = battvalue / 10;
+			uint16_t batDecimalPart = battvalue % 10;
 			char batint[10];
 			char batdec[10];
 			itoa(batIntPart, batint, 10);
@@ -94,6 +103,32 @@ void processCAN(FDCAN_RxHeaderTypeDef *hdr, uint8_t *data) {
 			strncat(batt, batdec, 1);
 			setbattdata(batt);
 			break;
+    }
+}
+
+void shiftTask(void)
+{
+    if (!shiftPending) {
+        return;
+    }
+
+	FDCAN_TxHeaderTypeDef txShiftHeader;
+	uint8_t txData[8] = {0};
+	txData[1] = uniqueId;
+	txData[0] = shiftCommand;
+
+	txShiftHeader.Identifier = 10;
+	txShiftHeader.IdType = FDCAN_EXTENDED_ID;
+	txShiftHeader.TxFrameType = FDCAN_DATA_FRAME;
+	txShiftHeader.DataLength = FDCAN_DLC_BYTES_8;
+	txShiftHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
+	txShiftHeader.BitRateSwitch = FDCAN_BRS_OFF;
+	txShiftHeader.FDFormat = FDCAN_CLASSIC_CAN;
+	txShiftHeader.MessageMarker = 0;
+
+	if (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txShiftHeader, txData) == HAL_OK) {
+		lastSendMs = HAL_GetTick();
+		framesSent++;
     }
 }
 

@@ -10,6 +10,7 @@
 #include "rpiDisplaySceneBuilder.h"
 #include "FreeSans18pt7b.h"
 #include "FreeMonoBold24pt7b.h"
+#include "FreeSerifBoldItalic18pt7b.h"
 #include "gearFont.h"
 #include "iconFont.h"
 #include "splashimage.h"
@@ -25,7 +26,8 @@ char tempicon[3] = " ";
 char batticon[3] = "\"";
 char rpmicon[3] = "#";
 char speedicon[3] = "%";
-DisplayObject* otherobjects[10] = {
+char name[10] = "G-26";
+DisplayObject* otherobjects[11] = {
 		new StringObject(200, 260, 0xFFFF, FREE_MONO_BOLD_24PT7B, NO_CENTER_OBJECT, rpmresult, 1),
 		new StringObject(350, 100, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, tempresult, 3),
 		new StringObject(350, 60, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, battresult, 6),
@@ -36,8 +38,9 @@ DisplayObject* otherobjects[10] = {
 		new StringObject(440, 288, 0xFFFF, ICONFONT, LEFTDRAW_OBJECT, rpmicon, 8),
 		new OutlineRectObject(190, 250, 260, 55, 0xFFFF, NO_CENTER_OBJECT, 9),
 		new StringObject(405, 210, 0xFFFF, ICONFONT, CENTER_OBJECT, speedicon, 10),
+		new StringObject(50, 280, 0x00FF, FREE_SERIF_BOLD_ITALIC_18PT7B, CENTER_OBJECT, name, 11)
 };
-Scene myScene2(otherobjects, 10);
+Scene myScene2(otherobjects, 11);
 
 char rpmresult2[17] = "";
 char oiltempresult2[18] = "";
@@ -68,10 +71,10 @@ void setrpmdata(char *rpmvalue) {
 	((StringObject*)otherobjects[0])->updateString(rpmresult, NO_CENTER_OBJECT, 0xFFFF, FREE_MONO_BOLD_24PT7B, 200, 260, 1);
 }
 
-void settempdata(char *tempvalue) {
+void settempdata(char *tempvalue, uint16_t color) {
 	strncpy(tempresult, "", 10);
 	strncat(tempresult, tempvalue, 10);
-	((StringObject*)otherobjects[1])->updateString(tempresult, CENTER_OBJECT, 0xFFFF, FREE_SANS_18PT7B, 350, 100, 3);
+	((StringObject*)otherobjects[1])->updateString(tempresult, CENTER_OBJECT, color, FREE_SANS_18PT7B, 350, 100, 3);
 
 }
 
@@ -94,7 +97,7 @@ void setspeeddata(char *speedvalue) {
 }
 
 void domainscreen() {
-	myScene2.setScene(otherobjects, 10);
+	myScene2.setScene(otherobjects, 11);
 	myScene2.drawScene();
 }
 

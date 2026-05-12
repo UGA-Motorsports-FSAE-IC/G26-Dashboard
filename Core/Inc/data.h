@@ -15,7 +15,7 @@
 
 #define RPMCANID 1520
 #define CLTCANID 1522
-#define GEARCANID 1553
+#define GEARCANID 50
 #define BATTERYCANID 1523
 #define SPEEDCANID 1562
 
@@ -27,5 +27,7 @@ void lcdInit();
 void updateMainData();
 
 void processCAN(FDCAN_RxHeaderTypeDef *hdr, uint8_t *data);
+
+void shiftTask(void);
 
 #endif

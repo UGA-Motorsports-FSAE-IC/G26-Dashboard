@@ -27,12 +27,12 @@
 #include "FreeMonoBold24pt7b.h"
 #include "FreeSans18pt7b.h"
 #include "rpiSceneBuilderUser.h"
-#include "stm32_adafruit_lcd.h"
 #include "shiftLights.h"
 #include "rpiDisplayShapes.h"
 #include "data.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "easyusbprintln.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -85,44 +85,84 @@ uint8_t ledcolors[48];
 uint32_t ledbytes[(16 * 24) + 150] __attribute__((section(".nocache")));;
 extern uint16_t framebuffer[];
 
-volatile uint32_t err = 0;
-FDCAN_ProtocolStatusTypeDef status;
-
+volatile uint8_t shiftPending = 0;
+volatile uint32_t lastSendMs = 0;
 uint8_t shiftCommand;
-FDCAN_TxHeaderTypeDef txShiftHeader;
-FDCAN_FilterTypeDef canfilter;
-uint8_t txData[8] = {0};
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-  if (GPIO_Pin == PAD__Pin)
-  {
-	HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
+uint8_t currentScreen = 0;
+uint8_t commsOn = 0;
+
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+  if (GPIO_Pin == PAD__Pin) {
+	// Down Shift
+	shiftPending = 1;
 	shiftCommand = 1;
-  }
-  else if (GPIO_Pin == PAD_A2_Pin)
-  {
-	HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
+  } else if (GPIO_Pin == PAD_A2_Pin) {
+	// Up Shift
+	shiftPending = 1;
 	shiftCommand = 2;
   }
 }
 
-uint32_t fdcanCallBackMessage;
-uint8_t fdcanRecieved;
+
+
+FDCAN_FilterTypeDef canfilter;
+volatile uint8_t dataRecieved;
+uint8_t RETRY_MS = 10;
+
+volatile uint8_t testprint = 0;
+
 
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs) {
-	fdcanRecieved = 1;
-	fdcanCallBackMessage = RxFifo0ITs;
+
+	dataRecieved = 1;
 }
 
-uint32_t error;
-void HAL_FDCAN_ErrorCallback(FDCAN_HandleTypeDef *hfdcan)
-{
+/*
+void toggleComs() {
+	FDCAN_TxHeaderTypeDef txCommsHeader;
+	uint8_t txData[8] = {0};
+	txData[0] = commsOn;
 
+	txCommsHeader.Identifier = 15;
+	txCommsHeader.IdType = FDCAN_EXTENDED_ID;
+	txCommsHeader.TxFrameType = FDCAN_DATA_FRAME;
+	txCommsHeader.DataLength = FDCAN_DLC_BYTES_8;
+	txCommsHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
+	txCommsHeader.BitRateSwitch = FDCAN_BRS_OFF;
+	txCommsHeader.FDFormat = FDCAN_CLASSIC_CAN;
+	txCommsHeader.MessageMarker = 0;
 
-	error = HAL_FDCAN_GetError(hfdcan);
-
+	HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txCommsHeader, txData);
 }
+
+
+void checkButtons() {
+	int timeDiff = (btn3Hit > btn4Hit) ? (btn3Hit - btn4Hit) : (btn4Hit - btn3Hit);
+	int screenSwitchHandled = 0;
+
+	if (button3 && button4 && timeDiff < 100 && !screenSwitchHandled) {
+	  screenSwitchHandled = 1;
+	  button3 = 0;
+	  button4 = 0;
+	  if (currentScreen == 0) {
+		  initdatascreen();
+		  dodatascreen();
+		  currentScreen = 1;
+	  } else {
+		  lcdInit();
+		  currentScreen = 0;
+	  }
+	} else if (button3) {
+
+	} else {
+		commsOn = !commsOn;
+		toggleComs();
+	}
+}
+*/
+
 /* USER CODE END 0 */
 
 /**
@@ -176,37 +216,18 @@ int main(void)
   MX_FDCAN2_Init();
   /* USER CODE BEGIN 2 */
 
-  txShiftHeader.Identifier =  200;
-  txShiftHeader.IdType = FDCAN_STANDARD_ID;
-  txShiftHeader.TxFrameType = FDCAN_DATA_FRAME;
-  txShiftHeader.DataLength = FDCAN_DLC_BYTES_8;
-  txShiftHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-  txShiftHeader.BitRateSwitch = FDCAN_BRS_OFF;
-  txShiftHeader.FDFormat = FDCAN_CLASSIC_CAN;
-  txShiftHeader.MessageMarker = 0;
-
-  canfilter.IdType = FDCAN_STANDARD_ID;
+  canfilter.IdType = FDCAN_EXTENDED_ID;
   canfilter.FilterIndex = 0;
   canfilter.FilterType = FDCAN_FILTER_MASK;
   canfilter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
   canfilter.FilterID1 = 0x000;
   canfilter.FilterID2 = 0x000;
 
-  if (HAL_FDCAN_ConfigFilter(&hfdcan2, &canfilter) != HAL_OK) {
-	  HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
-	  HAL_Delay(2000);
-  }
+  unsigned int configfilterresult = HAL_FDCAN_ConfigFilter(&hfdcan2, &canfilter);
+  unsigned int startresult = HAL_FDCAN_Start(&hfdcan2);
+  unsigned int activatenotificationresult = HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
 
-  if (HAL_FDCAN_Start(&hfdcan2) != HAL_OK) {
-	  setColorAll(&htim2, TIM_CHANNEL_1, 210, 45, 60, ledcolors, ledbytes);
-	  HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
-	  HAL_Delay(2000);
-  }
-
-  if (HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK) {
-	  HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
-	  HAL_Delay(2000);
-  }
+  USB_Println("config result was %u, startresult was %u, activatenotificationresult was %u\n", configfilterresult, startresult, activatenotificationresult);
 
   HAL_SetFMCMemorySwappingConfig(FMC_SWAPBMAP_SDRAM_SRAM);
   /* USER CODE END 2 */
@@ -214,37 +235,48 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-
   shiftLightsInit(&htim2, TIM_CHANNEL_1, ledcolors, ledbytes);
   startUp(&htim2, TIM_CHANNEL_1, ledcolors, ledbytes);
-  setColorAll(&htim2, TIM_CHANNEL_1, 2, 10, 2, ledcolors, ledbytes);
+  setColorAll(&htim2, TIM_CHANNEL_1, 0, 0, 0, ledcolors, ledbytes);
 
   lcdInit();
+  int count = 0;
+  while (1) {
 
-  while (1)
-  {
+	  USB_Println("Fifo fill level: %d", HAL_FDCAN_GetRxFifoFillLevel(&hfdcan2, FDCAN_RX_FIFO0));
 
-	  if (shiftCommand == 1 || shiftCommand == 2) {
-	      txData[0] = shiftCommand;
-	      if (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txShiftHeader, txData) != HAL_OK) {
-	    	  err = HAL_FDCAN_GetError(&hfdcan2);
-	    	  setColorAll(&htim2, TIM_CHANNEL_1, 20, 255, 20, ledcolors, ledbytes);
-	      }
-	      shiftCommand = 0;
-	    }
-	  shiftCommand = 1;
-	  txData[0] = shiftCommand;
-	  HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txShiftHeader, txData);
-	  HAL_Delay(100);
+	  if (testprint) {
+		  USB_Println("there was a can interrupt\n");
+	  }
 
-	  /*
-	  HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txShiftHeader, txData);
-	  HAL_Delay(5000);
-	  HAL_FDCAN_GetProtocolStatus(&hfdcan2, &status);
-	   */
-	  if (fdcanRecieved) {
-		  updateMainData(&hfdcan2, fdcanCallBackMessage);
-		  fdcanRecieved = 0;
+	  if (count > 10000000) {
+		  USB_Println("While loop\n");
+		  count = 0;
+	  }
+	  count++;
+	  if (shiftPending) {
+		FDCAN_TxHeaderTypeDef txShiftHeader;
+		uint8_t txData[8] = {0};
+		txData[0] = shiftCommand;
+		USB_Println("shiftCommand: %d\n", shiftCommand);
+
+		txShiftHeader.Identifier = 8888;
+		txShiftHeader.IdType = FDCAN_EXTENDED_ID;
+		txShiftHeader.TxFrameType = FDCAN_DATA_FRAME;
+		txShiftHeader.DataLength = FDCAN_DLC_BYTES_8;
+		txShiftHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
+		txShiftHeader.BitRateSwitch = FDCAN_BRS_OFF;
+		txShiftHeader.FDFormat = FDCAN_CLASSIC_CAN;
+		txShiftHeader.MessageMarker = 0;
+		USB_Println("going to send message...\n");
+		int message = HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txShiftHeader, txData);
+		USB_Println("HAL add message result: %d\n", message);
+		shiftPending = 0;
+	  }
+	  if (dataRecieved) {
+		  USB_Println("Data Received\n");
+		  updateMainData(&hfdcan2);
+		  dataRecieved = 0;
 	  }
 
     /* USER CODE END WHILE */
@@ -269,7 +301,7 @@ void SystemClock_Config(void)
 
   /** Configure the main internal regulator output voltage
   */
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0);
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
   while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
 
@@ -282,7 +314,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 2;
-  RCC_OscInitStruct.PLL.PLLN = 64;
+  RCC_OscInitStruct.PLL.PLLN = 48;
   RCC_OscInitStruct.PLL.PLLP = 2;
   RCC_OscInitStruct.PLL.PLLQ = 2;
   RCC_OscInitStruct.PLL.PLLR = 2;
@@ -328,7 +360,7 @@ void PeriphCommonClock_Config(void)
   PeriphClkInitStruct.PLL2.PLL2N = 48;
   PeriphClkInitStruct.PLL2.PLL2P = 2;
   PeriphClkInitStruct.PLL2.PLL2Q = 26;
-  PeriphClkInitStruct.PLL2.PLL2R = 4;
+  PeriphClkInitStruct.PLL2.PLL2R = 6;
   PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2VCIRANGE_3;
   PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2VCOWIDE;
   PeriphClkInitStruct.PLL2.PLL2FRACN = 0;
@@ -395,13 +427,13 @@ static void MX_FDCAN2_Init(void)
   hfdcan2.Init.NominalTimeSeg1 = 21;
   hfdcan2.Init.NominalTimeSeg2 = 2;
   hfdcan2.Init.DataPrescaler = 1;
-  hfdcan2.Init.DataSyncJumpWidth = 2;
-  hfdcan2.Init.DataTimeSeg1 = 21;
-  hfdcan2.Init.DataTimeSeg2 = 2;
+  hfdcan2.Init.DataSyncJumpWidth = 11;
+  hfdcan2.Init.DataTimeSeg1 = 12;
+  hfdcan2.Init.DataTimeSeg2 = 11;
   hfdcan2.Init.MessageRAMOffset = 0;
   hfdcan2.Init.StdFiltersNbr = 0;
-  hfdcan2.Init.ExtFiltersNbr = 0;
-  hfdcan2.Init.RxFifo0ElmtsNbr = 2;
+  hfdcan2.Init.ExtFiltersNbr = 1;
+  hfdcan2.Init.RxFifo0ElmtsNbr = 8;
   hfdcan2.Init.RxFifo0ElmtSize = FDCAN_DATA_BYTES_8;
   hfdcan2.Init.RxFifo1ElmtsNbr = 0;
   hfdcan2.Init.RxFifo1ElmtSize = FDCAN_DATA_BYTES_8;
@@ -409,7 +441,7 @@ static void MX_FDCAN2_Init(void)
   hfdcan2.Init.RxBufferSize = FDCAN_DATA_BYTES_8;
   hfdcan2.Init.TxEventsNbr = 0;
   hfdcan2.Init.TxBuffersNbr = 0;
-  hfdcan2.Init.TxFifoQueueElmtsNbr = 2;
+  hfdcan2.Init.TxFifoQueueElmtsNbr = 8;
   hfdcan2.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
   hfdcan2.Init.TxElmtSize = FDCAN_DATA_BYTES_8;
   if (HAL_FDCAN_Init(&hfdcan2) != HAL_OK)
@@ -444,7 +476,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 0;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 260;
+  htim2.Init.Period = 195;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -596,12 +628,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : BTN1_Pin BTN2_Pin BTN3_Pin BTN4_Pin */
-  GPIO_InitStruct.Pin = BTN1_Pin|BTN2_Pin|BTN3_Pin|BTN4_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
   /*Configure GPIO pin : TS_CS_Pin */
   GPIO_InitStruct.Pin = TS_CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -635,12 +661,6 @@ static void MX_GPIO_Init(void)
 
   HAL_NVIC_SetPriority(PAD_A2_EXTI_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(PAD_A2_EXTI_IRQn);
-
-  HAL_NVIC_SetPriority(BTN1_EXTI_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(BTN1_EXTI_IRQn);
-
-  HAL_NVIC_SetPriority(BTN2_EXTI_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(BTN2_EXTI_IRQn);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 

@@ -28,6 +28,7 @@
 /*
  * some font declarations
  */
+#define FREE_SERIF_BOLD_ITALIC_18PT7B &FreeSerifBoldItalic18pt7b
 #define FREE_MONO_BOLD_24PT7B &FreeMonoBold24pt7b
 #define FREE_SANS_18PT7B &FreeSans18pt7b
 #define GEARFONT &gearFont

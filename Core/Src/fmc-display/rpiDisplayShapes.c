@@ -9,7 +9,6 @@
 
 #include "gfxfont.h"
 #include "lcd_io.h"
-#include "../easyusbprintln/easyusbprintln.h"
 #include <string.h>
 
 extern uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);

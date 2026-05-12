@@ -8,7 +8,6 @@
 #include "lcd_io.h"
 #include "rpiDisplayShapes.h"
 #include "gfxfont.h"
-#include "../easyusbprintln/easyusbprintln.h"
 #include <string.h>
 
 extern uint16_t framebuffer[];

@@ -18,7 +18,7 @@ extern "C" {
 	void initdatascreen();
 	void changebackground(uint16_t color);
 	void setrpmdata(char *rpmvalue);
-	void settempdata(char *tempvalue);
+	void settempdata(char *tempvalue, uint16_t color);
 	void setgeardata(char *gearvalue);
 	void setbattdata(char *battvalue);
 	void setspeeddata(char *speedvalue);

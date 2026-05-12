@@ -1,7 +1,7 @@
 ..\Core\Src\shiftLights.c:15:6:setColor	6
-..\Core\Src\shiftLights.c:47:6:setColorAll	7
-..\Core\Src\shiftLights.c:80:6:shiftLightsInit	7
-..\Core\Src\shiftLights.c:113:6:HAL_TIM_PWM_PulseFinishedCallback	1
-..\Core\Src\shiftLights.c:121:6:UpdateShiftLights	4
-..\Core\Src\shiftLights.c:147:6:lightOn	5
-..\Core\Src\shiftLights.c:182:6:startUp	3
+..\Core\Src\shiftLights.c:44:6:setColorAll	7
+..\Core\Src\shiftLights.c:75:6:shiftLightsInit	7
+..\Core\Src\shiftLights.c:106:6:HAL_TIM_PWM_PulseFinishedCallback	1
+..\Core\Src\shiftLights.c:114:6:UpdateShiftLights	4
+..\Core\Src\shiftLights.c:140:6:lightOn	5
+..\Core\Src\shiftLights.c:175:6:startUp	3

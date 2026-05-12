@@ -23,9 +23,9 @@ void setColor(TIM_HandleTypeDef *htim, uint32_t Channel, uint8_t green, uint8_t 
     for (int i = index; i < (index + 3); i++) {
     	for (int j = 0; j < 8; j++) {
     		if ((ledcolors[i] << j) & 128) {
-    			ledbytes[(i * 8) + j] = 168;
+    			ledbytes[(i * 8) + j] = 131;
     		} else {
-   				ledbytes[(i * 8) + j] = 84;
+   				ledbytes[(i * 8) + j] = 64;
     		}
     	}
     }
@@ -34,12 +34,9 @@ void setColor(TIM_HandleTypeDef *htim, uint32_t Channel, uint8_t green, uint8_t 
     	ledbytes[i] = 0;
     }
 
-    HAL_TIM_PWM_Start_DMA(htim, Channel,
-    		(uint32_t *)ledbytes,
-			PWM_BUFFER_SIZE + 150);
+    HAL_TIM_PWM_Start_DMA(htim, Channel, (uint32_t *)ledbytes, PWM_BUFFER_SIZE + 150);
 
-    while (!datasentflag) {
-    }
+    while (!datasentflag) {}
 
     datasentflag = 0;
 }
@@ -57,9 +54,9 @@ void setColorAll(TIM_HandleTypeDef *htim, uint32_t Channel, uint8_t green, uint8
 		for (int j = 0; j < 8; j++) {
 
 			if ((ledcolors[i] << j) & 128) {
-				ledbytes[(i * 8) + j] = 168;
+				ledbytes[(i * 8) + j] = 131;
 			} else {
-				ledbytes[(i * 8) + j] = 84;
+				ledbytes[(i * 8) + j] = 64;
 			}
 		}
 	}
@@ -68,9 +65,7 @@ void setColorAll(TIM_HandleTypeDef *htim, uint32_t Channel, uint8_t green, uint8
 		ledbytes[i] = 0;
 	}
 
-	HAL_TIM_PWM_Start_DMA(htim, Channel,
-			(uint32_t *)ledbytes,
-			PWM_BUFFER_SIZE + 150);
+	HAL_TIM_PWM_Start_DMA(htim, Channel, (uint32_t *)ledbytes, PWM_BUFFER_SIZE + 150);
 
 	while (!datasentflag) {}
 
@@ -90,9 +85,9 @@ void shiftLightsInit(TIM_HandleTypeDef *htim, uint32_t Channel,
 		for (int j = 0; j < 8; j++) {
 
 			if ((ledcolors[i] << j) & 128) {
-				ledbytes[(i * 8) + j] = 168;
+				ledbytes[(i * 8) + j] = 131;
 			} else {
-				ledbytes[(i * 8) + j] = 84;
+				ledbytes[(i * 8) + j] = 64;
 			}
 		}
 	}
@@ -101,9 +96,7 @@ void shiftLightsInit(TIM_HandleTypeDef *htim, uint32_t Channel,
 		ledbytes[i] = 0;
 	}
 
-	HAL_TIM_PWM_Start_DMA(htim, Channel,
-			(uint32_t *)ledbytes,
-			PWM_BUFFER_SIZE + 150);
+	HAL_TIM_PWM_Start_DMA(htim, Channel, (uint32_t *)ledbytes, PWM_BUFFER_SIZE + 150);
 
 	while (!datasentflag) {}
 
@@ -162,19 +155,19 @@ void lightOn(TIM_HandleTypeDef *htim, uint32_t Channel,
 	if (index < 6) {
 
 		setColor(htim, Channel,
-				255, 0, 0,
+				0, 150, 0,
 				ledcolors, ledbytes, index);
 
 	} else if (index < 10) {
 
 		setColor(htim, Channel,
-				0, 255, 0,
+				150, 0, 0,
 				ledcolors, ledbytes, index);
 
 	} else if (index < 14){
 
 		setColor(htim, Channel,
-				0, 0, 255,
+				0, 0, 150,
 				ledcolors, ledbytes, index);
 	}
 }

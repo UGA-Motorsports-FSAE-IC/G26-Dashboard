@@ -1,3 +1,4 @@
-..\Core\Src\data.c:29:6:lcdInit	1
-..\Core\Src\data.c:41:6:updateMainData	2
-..\Core\Src\data.c:49:6:processCAN	10
+..\Core\Src\data.c:38:6:lcdInit	1
+..\Core\Src\data.c:50:6:updateMainData	2
+..\Core\Src\data.c:59:6:processCAN	10
+..\Core\Src\data.c:109:6:shiftTask	3
