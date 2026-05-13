@@ -155,19 +155,19 @@ void lightOn(TIM_HandleTypeDef *htim, uint32_t Channel,
 	if (index < 6) {
 
 		setColor(htim, Channel,
-				0, 150, 0,
+				100, 0, 0,
 				ledcolors, ledbytes, index);
 
 	} else if (index < 10) {
 
 		setColor(htim, Channel,
-				150, 0, 0,
+				0, 100, 0,
 				ledcolors, ledbytes, index);
 
 	} else if (index < 14){
 
 		setColor(htim, Channel,
-				0, 0, 150,
+				0, 0, 100,
 				ledcolors, ledbytes, index);
 	}
 }

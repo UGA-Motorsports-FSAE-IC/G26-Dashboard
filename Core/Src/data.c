@@ -15,7 +15,7 @@
 extern uint8_t ledcolors[];
 extern uint32_t ledbytes[];
 extern TIM_HandleTypeDef htim2;
-int G1[12] = {0, 3000, 4000, 5000, 6000, 7000, 8000, 8500, 9000, 9500, 10000, 10200};
+int G1[12] = {500, 3000, 4000, 5000, 6000, 7000, 8000, 8500, 9000, 9500, 10000, 10200};
 char rpm[20] = "null";
 char temp[20] = "null";
 char gear[20] = "8";

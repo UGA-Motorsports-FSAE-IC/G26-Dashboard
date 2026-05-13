@@ -29,6 +29,7 @@
 #include "rpiSceneBuilderUser.h"
 #include "shiftLights.h"
 #include "rpiDisplayShapes.h"
+#include "easyusbprintln.h"
 #include "data.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,6 +57,7 @@ DMA2D_HandleTypeDef hdma2d;
 FDCAN_HandleTypeDef hfdcan2;
 
 TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim15;
 DMA_HandleTypeDef hdma_tim2_ch1;
 
 SRAM_HandleTypeDef hsram1;
@@ -74,6 +76,7 @@ static void MX_TIM2_Init(void);
 static void MX_FMC_Init(void);
 static void MX_DMA2D_Init(void);
 static void MX_FDCAN2_Init(void);
+static void MX_TIM15_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -84,7 +87,7 @@ uint8_t ledcolors[48];
 uint32_t ledbytes[(16 * 24) + 150] __attribute__((section(".nocache")));;
 extern uint16_t framebuffer[];
 
-volatile uint8_t shiftPending = 0;
+volatile uint8_t shiftCounter = 0;
 volatile uint32_t lastSendMs = 0;
 uint8_t shiftCommand;
 
@@ -97,14 +100,22 @@ uint8_t currentScreen = 0;
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   if (GPIO_Pin == PAD__Pin) {
 	// Down Shift
-	shiftPending = 1;
+	shiftCounter++;
 	shiftCommand = 1;
   }
   else if (GPIO_Pin == PAD_A2_Pin) {
 	// Up Shift
-	shiftPending = 1;
+	shiftCounter++;
 	shiftCommand = 2;
   }
+}
+
+uint8_t timerBool = 0;
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	if (htim->Instance == TIM15) {
+		timerBool = 1;
+	}
 }
 
 
@@ -185,9 +196,10 @@ int main(void)
   MX_DMA2D_Init();
   MX_USB_DEVICE_Init();
   MX_FDCAN2_Init();
+  MX_TIM15_Init();
   /* USER CODE BEGIN 2 */
 
-  canfilter.IdType = FDCAN_EXTENDED_ID;
+  canfilter.IdType = FDCAN_STANDARD_ID;
   canfilter.FilterIndex = 0;
   canfilter.FilterType = FDCAN_FILTER_MASK;
   canfilter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
@@ -208,17 +220,20 @@ int main(void)
   startUp(&htim2, TIM_CHANNEL_1, ledcolors, ledbytes);
   setColorAll(&htim2, TIM_CHANNEL_1, 0, 0, 0, ledcolors, ledbytes);
 
+  HAL_TIM_Base_Start_IT(&htim15);
+
   lcdInit();
 
   while (1) {
 
-	  if (shiftPending) {
+	  if (timerBool) {
 		FDCAN_TxHeaderTypeDef txShiftHeader;
 		uint8_t txData[8] = {0};
+		txData[1] = shiftCounter;
 		txData[0] = shiftCommand;
 
 		txShiftHeader.Identifier = 10;
-		txShiftHeader.IdType = FDCAN_EXTENDED_ID;
+		txShiftHeader.IdType = FDCAN_STANDARD_ID;
 		txShiftHeader.TxFrameType = FDCAN_DATA_FRAME;
 		txShiftHeader.DataLength = FDCAN_DLC_BYTES_8;
 		txShiftHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
@@ -227,7 +242,7 @@ int main(void)
 		txShiftHeader.MessageMarker = 0;
 
 		HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txShiftHeader, txData);
-		shiftPending = 0;
+		timerBool = 0;
 	  }
 
 	  if (dataRecieved) {
@@ -315,7 +330,7 @@ void PeriphCommonClock_Config(void)
   PeriphClkInitStruct.PLL2.PLL2M = 2;
   PeriphClkInitStruct.PLL2.PLL2N = 48;
   PeriphClkInitStruct.PLL2.PLL2P = 2;
-  PeriphClkInitStruct.PLL2.PLL2Q = 26;
+  PeriphClkInitStruct.PLL2.PLL2Q = 52;
   PeriphClkInitStruct.PLL2.PLL2R = 6;
   PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2VCIRANGE_3;
   PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2VCOWIDE;
@@ -379,7 +394,7 @@ static void MX_FDCAN2_Init(void)
   hfdcan2.Init.TransmitPause = DISABLE;
   hfdcan2.Init.ProtocolException = DISABLE;
   hfdcan2.Init.NominalPrescaler = 1;
-  hfdcan2.Init.NominalSyncJumpWidth = 2;
+  hfdcan2.Init.NominalSyncJumpWidth = 3;
   hfdcan2.Init.NominalTimeSeg1 = 20;
   hfdcan2.Init.NominalTimeSeg2 = 3;
   hfdcan2.Init.DataPrescaler = 1;
@@ -387,9 +402,9 @@ static void MX_FDCAN2_Init(void)
   hfdcan2.Init.DataTimeSeg1 = 12;
   hfdcan2.Init.DataTimeSeg2 = 11;
   hfdcan2.Init.MessageRAMOffset = 0;
-  hfdcan2.Init.StdFiltersNbr = 0;
-  hfdcan2.Init.ExtFiltersNbr = 1;
-  hfdcan2.Init.RxFifo0ElmtsNbr = 64;
+  hfdcan2.Init.StdFiltersNbr = 1;
+  hfdcan2.Init.ExtFiltersNbr = 0;
+  hfdcan2.Init.RxFifo0ElmtsNbr = 32;
   hfdcan2.Init.RxFifo0ElmtSize = FDCAN_DATA_BYTES_8;
   hfdcan2.Init.RxFifo1ElmtsNbr = 0;
   hfdcan2.Init.RxFifo1ElmtSize = FDCAN_DATA_BYTES_8;
@@ -466,6 +481,52 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 2 */
   HAL_TIM_MspPostInit(&htim2);
+
+}
+
+/**
+  * @brief TIM15 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM15_Init(void)
+{
+
+  /* USER CODE BEGIN TIM15_Init 0 */
+
+  /* USER CODE END TIM15_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM15_Init 1 */
+
+  /* USER CODE END TIM15_Init 1 */
+  htim15.Instance = TIM15;
+  htim15.Init.Prescaler = 24;
+  htim15.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim15.Init.Period = 65535;
+  htim15.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim15.Init.RepetitionCounter = 0;
+  htim15.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim15) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim15, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim15, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM15_Init 2 */
+
+  /* USER CODE END TIM15_Init 2 */
 
 }
 
