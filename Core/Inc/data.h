@@ -18,7 +18,7 @@
 #define GEARCANID 50
 #define BATTERYCANID 1523
 #define SPEEDCANID 1562
-
+#define OILTEMPCANID 1530
 
 
 

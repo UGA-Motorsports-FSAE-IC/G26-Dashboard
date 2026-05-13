@@ -21,6 +21,7 @@ char temp[20] = "null";
 char gear[20] = "8";
 char batt[20] = "null";
 char speed[20] = "null";
+char oiltemp[20] = "null";
 
 extern FDCAN_HandleTypeDef hfdcan2;
 
@@ -53,7 +54,7 @@ void updateMainData(FDCAN_HandleTypeDef *__hfdcan__) {
 }
 */
 
-void processCAN(int id, uint8_t *data) {
+int processCAN(int id, uint8_t *data) {
     switch (id) {
         case RPMCANID: {
             uint16_t rpmVal = ((uint16_t)data[6] << 8) + data[7];
@@ -101,6 +102,12 @@ void processCAN(int id, uint8_t *data) {
             strncat(batt, batdec, 1);
             setbattdata(batt);
             break;
+        }
+
+        case OILTEMPCANID: {
+        	uint16_t oiltempval = ((uint16_t)data[3] << 8) + data[4];
+        	itoa(oiltempval, oiltemp, 10);
+        	setoiltempdata(oiltemp);
         }
     }
 }
