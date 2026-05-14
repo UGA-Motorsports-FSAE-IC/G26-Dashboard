@@ -102,8 +102,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	// Down Shift
 	shiftCounter++;
 	shiftCommand = 1;
-  }
-  else if (GPIO_Pin == PAD_A2_Pin) {
+  } else if (GPIO_Pin == PAD_A2_Pin) {
 	// Up Shift
 	shiftCounter++;
 	shiftCommand = 2;
@@ -141,7 +140,9 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 
 // Then in main loop, rxHeader and rxData are already populated
 void updateMainData(void) {
-  processCAN(id, rxData);  // use what the interrupt stored
+  while (HAL_FDCAN_GetRxFifoFillLevel(&hfdcan2, FDCAN_RX_FIFO0) > 0) {
+	  processCAN(id, rxData);  // use what the interrupt stored
+  }
   domainscreen();
 }
 
@@ -232,7 +233,7 @@ int main(void)
 		txData[1] = shiftCounter;
 		txData[0] = shiftCommand;
 
-		txShiftHeader.Identifier = 10;
+		txShiftHeader.Identifier = 172;
 		txShiftHeader.IdType = FDCAN_STANDARD_ID;
 		txShiftHeader.TxFrameType = FDCAN_DATA_FRAME;
 		txShiftHeader.DataLength = FDCAN_DLC_BYTES_8;

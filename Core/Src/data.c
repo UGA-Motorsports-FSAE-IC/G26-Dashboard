@@ -72,8 +72,9 @@ void processCAN(int id, uint8_t *data) {
         }
 
         case GEARCANID: {
-            uint16_t gearVal = ((uint16_t)data[0] << 8) | data[1];
-            itoa(gearVal, gear, 10);
+            uint16_t gearVal = ((uint16_t)data[3] << 8) | data[2];
+            int gearNum = calculateGear(gearVal);
+            itoa(gearNum, gear, 10);
             setgeardata(gear);
             break;
         }
@@ -103,6 +104,26 @@ void processCAN(int id, uint8_t *data) {
             break;
         }
     }
+}
+
+int calculateGear(uint16_t gv) {
+	if (gv > 385 && gv < 685) {
+		return 1;
+	} else if (gv >= 685 && gv < 1065) {
+		return 7;
+	} else if (gv >= 1065 && gv < 1335) {
+		return 2;
+	} else if (gv >= 1335 && gv < 2014) {
+		return 3;
+	} else if (gv >= 2014 && gv < 2466) {
+		return 4;
+	} else if (gv >= 2466 && gv < 3000) {
+		return 5;
+	} else if (gv >= 3000 && gv < 3689) {
+		return 6;
+	} else {
+		return 8;
+	}
 }
 
 void shiftTask(void)
