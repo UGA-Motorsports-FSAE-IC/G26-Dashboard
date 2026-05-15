@@ -28,8 +28,8 @@ char rpmicon[3] = "#";
 char speedicon[3] = "%";
 char name[10] = "G-26";
 char oiltempresult[10] = "";
-char oiltemplabel[10] = "Oil Temp: ";
-DisplayObject* otherobjects[13] = {
+char oiltemplabel[15] = "Oil Temp: ";
+DisplayObject* otherobjects[11] = {
 		new StringObject(200, 260, 0xFFFF, FREE_MONO_BOLD_24PT7B, NO_CENTER_OBJECT, rpmresult, 1),
 		new StringObject(350, 100, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, tempresult, 3),
 		new StringObject(350, 60, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, battresult, 6),
@@ -41,10 +41,10 @@ DisplayObject* otherobjects[13] = {
 		new OutlineRectObject(190, 250, 260, 55, 0xFFFF, NO_CENTER_OBJECT, 9),
 		new StringObject(405, 210, 0xFFFF, ICONFONT, CENTER_OBJECT, speedicon, 10),
 		new StringObject(50, 280, 0x00FF, FREE_SERIF_BOLD_ITALIC_18PT7B, CENTER_OBJECT, name, 11),
-		new StringObject(400, 20, 0xFFFF, FREE_SANES_18PT7B, CENTER_OBJECT, oiltemplabel, 12),
-		new StringObject(350, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, oiltempresult, 13)
+		//new StringObject(400, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, oiltemplabel, 12),
+		//new StringObject(350, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, oiltempresult, 13)
 };
-Scene myScene2(otherobjects, 13);
+Scene myScene2(otherobjects, 11);
 
 char rpmresult2[17] = "";
 char oiltempresult2[18] = "";
@@ -99,15 +99,16 @@ void setspeeddata(char *speedvalue) {
 	strncat(speedresult, speedvalue, 10);
 	((StringObject*)otherobjects[6])->updateString(speedresult, LEFTDRAW_OBJECT, 0xFFFF, FREE_SANS_18PT7B, 375, 185, 7);
 }
-
-void setoiltempdata(char *oiltempvalue) {
-	strncpy(oiltempresult, "", 10);
-	strncat(oiltempresult, oiltempvlaue, 10);
+/*
+void setoilpressuredata(char *oiltempvalue) {
+	strncpy(oilpressureresult, "", 10);
+	strncat(oilpressureresult, oiltempvalue, 10);
 	((StringObject*)otherobjects[12])->updateString(oiltempresult, CENTER_OBJECT, 0xFFFF, FREE_SANS_18PT7B, 350, 20, 12);
 }
+*/
 
 void domainscreen() {
-	myScene2.setScene(otherobjects, 13);
+	myScene2.setScene(otherobjects, 11);
 	myScene2.drawScene();
 }
 

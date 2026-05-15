@@ -54,10 +54,12 @@ void updateMainData(FDCAN_HandleTypeDef *__hfdcan__) {
 }
 */
 
-int processCAN(int id, uint8_t *data) {
+uint16_t rpmVal;
+
+void processCAN(int id, uint8_t *data) {
     switch (id) {
         case RPMCANID: {
-            uint16_t rpmVal = ((uint16_t)data[6] << 8) + data[7];
+            rpmVal = ((uint16_t)data[6] << 8) + data[7];
             UpdateShiftLights(&htim2, TIM_CHANNEL_1, ledcolors, ledbytes, rpmVal, G1);
             itoa(rpmVal, rpm, 10);
             setrpmdata(rpm);
@@ -104,12 +106,14 @@ int processCAN(int id, uint8_t *data) {
             setbattdata(batt);
             break;
         }
-
+        /*
         case OILTEMPCANID: {
         	uint16_t oiltempval = ((uint16_t)data[3] << 8) + data[4];
         	itoa(oiltempval, oiltemp, 10);
         	setoiltempdata(oiltemp);
         }
+        */
+
     }
 }
 

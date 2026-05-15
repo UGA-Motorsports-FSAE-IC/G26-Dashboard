@@ -90,6 +90,7 @@ extern uint16_t framebuffer[];
 volatile uint8_t shiftCounter = 0;
 volatile uint32_t lastSendMs = 0;
 uint8_t shiftCommand;
+uint32_t lastShift = 0;
 
 uint8_t button1 = 0;
 uint8_t button2 = 0;
@@ -98,6 +99,13 @@ uint32_t btn2Hit;
 uint8_t currentScreen = 0;
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+	uint32_t now = HAL_GetTick();
+
+	if ((now - lastShift) < 200)
+		return;
+
+	lastShift = now;
+
   if (GPIO_Pin == PAD__Pin) {
 	// Down Shift
 	shiftCounter++;
@@ -137,13 +145,21 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
   }
 }
 
+uint32_t lastDraw = 0;
 
-// Then in main loop, rxHeader and rxData are already populated
 void updateMainData(void) {
-  while (HAL_FDCAN_GetRxFifoFillLevel(&hfdcan2, FDCAN_RX_FIFO0) > 0) {
-	  processCAN(id, rxData);  // use what the interrupt stored
-  }
-  domainscreen();
+  //while (HAL_FDCAN_GetRxFifoFillLevel(&hfdcan2, FDCAN_RX_FIFO0) > 0) {
+  processCAN(id, rxData);
+}
+
+extern uint16_t rpmVal;
+int checkShift() {
+	if (shiftCommand == 2) {
+		return 1;
+	} else if (rpmVal > 10000) {
+		return 0;
+	}
+	return 1;
 }
 
 /* USER CODE END 0 */
@@ -200,12 +216,12 @@ int main(void)
   MX_TIM15_Init();
   /* USER CODE BEGIN 2 */
 
-  canfilter.IdType = FDCAN_STANDARD_ID;
-  canfilter.FilterIndex = 0;
-  canfilter.FilterType = FDCAN_FILTER_MASK;
-  canfilter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-  canfilter.FilterID1 = 0x000;
-  canfilter.FilterID2 = 0x000;
+	canfilter.IdType = FDCAN_STANDARD_ID;
+	canfilter.FilterIndex = 0;
+	canfilter.FilterType = FDCAN_FILTER_MASK;
+	canfilter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+	canfilter.FilterID1 = 0x000;
+	canfilter.FilterID2 = 0x000;
 
   HAL_FDCAN_ConfigFilter(&hfdcan2, &canfilter);
   HAL_FDCAN_Start(&hfdcan2);
@@ -227,7 +243,7 @@ int main(void)
 
   while (1) {
 
-	  if (timerBool) {
+	  if (timerBool && checkShift()) {
 		FDCAN_TxHeaderTypeDef txShiftHeader;
 		uint8_t txData[8] = {0};
 		txData[1] = shiftCounter;
@@ -249,6 +265,11 @@ int main(void)
 	  if (dataRecieved) {
 		  updateMainData();
 		  dataRecieved = 0;
+	  }
+
+	  if (HAL_GetTick() - lastDraw >= 50) {
+	      lastDraw = HAL_GetTick();
+	      domainscreen();
 	  }
 
     /* USER CODE END WHILE */
