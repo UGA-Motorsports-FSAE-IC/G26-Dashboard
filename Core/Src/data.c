@@ -21,7 +21,12 @@ char temp[20] = "null";
 char gear[20] = "8";
 char batt[20] = "null";
 char speed[20] = "null";
-char oiltemp[20] = "null";
+char airtank[20] = "null";
+char sparkcut[20] = "ON";
+char oilpressure[20] = "null";
+char shiftcount[20] = "null";
+
+uint16_t rpmVal;
 
 extern FDCAN_HandleTypeDef hfdcan2;
 
@@ -34,29 +39,19 @@ extern uint8_t shiftCommand;
 void lcdInit() {
     resetScreen();
     initializeScreen();
-    HAL_Delay(200);
-    settempdata(temp, 0xFFFF);
+    settempdata(temp);
     setgeardata(gear);
     setrpmdata(rpm);
     setbattdata(batt);
     setspeeddata(speed);
+    setairtankdata(airtank);
+    setshiftcountdata(shiftcount);
+    //setoilpressuredata(oilpressure);
     domainscreen();
 }
 
-/*
-void updateMainData(FDCAN_HandleTypeDef *__hfdcan__) {
-    while (HAL_FDCAN_GetRxFifoFillLevel(__hfdcan__, FDCAN_RX_FIFO0) > 0) {
-        HAL_FDCAN_GetRxMessage(__hfdcan__, FDCAN_RX_FIFO0, &rxHeader, rxData);
-
-        processCAN(&rxHeader, rxData);
-    }
-    __domainscreen__();
-}
-*/
-
-uint16_t rpmVal;
-
 void processCAN(int id, uint8_t *data) {
+
     switch (id) {
         case RPMCANID: {
             rpmVal = ((uint16_t)data[6] << 8) + data[7];
@@ -85,9 +80,13 @@ void processCAN(int id, uint8_t *data) {
         case CLTCANID: {
             uint16_t tempVal = ((uint16_t)data[6] << 8) + data[7];
             tempVal /= 10;
-            uint16_t color = (tempVal > 215) ? 0xf8e0 : 0xFFFF;
+            if (tempVal > 220) {
+            	setColor(&htim2, TIM_CHANNEL_1, 200, 0, 0, ledcolors, ledbytes, 15);
+            } else {
+            	setColor(&htim2, TIM_CHANNEL_1, 0, 0, 0, ledcolors, ledbytes, 15);
+            }
             itoa(tempVal, temp, 10);
-            settempdata(temp, color);
+            settempdata(temp);
             break;
         }
 
@@ -106,14 +105,21 @@ void processCAN(int id, uint8_t *data) {
             setbattdata(batt);
             break;
         }
-        /*
-        case OILTEMPCANID: {
-        	uint16_t oiltempval = ((uint16_t)data[3] << 8) + data[4];
-        	itoa(oiltempval, oiltemp, 10);
-        	setoiltempdata(oiltemp);
-        }
-        */
 
+        case AIRTANKCANID: {
+        	uint16_t adc = ((uint16_t)data[5] << 8) + data[4];
+        	float volts = adc * (5.0f / 4096.0f);
+        	float airtankval = (volts * 1250.0f) - 625.0f;
+        	itoa(airtankval, airtank, 10);
+        	setairtankdata(airtank);
+        }
+        /*
+        case OILPRESSURECANID: {
+			uint16_t oilpressureval = ((uint16_t)data[5] << 8) + data[4];
+			itoa(oilpressureval, oilpressure, 10);
+			setairtankdata(oilpressure);
+		}
+		*/
     }
 }
 

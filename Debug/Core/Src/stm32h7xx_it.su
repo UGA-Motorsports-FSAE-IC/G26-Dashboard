@@ -9,7 +9,8 @@
 ..\Core\Src\stm32h7xx_it.c:186:6:SysTick_Handler	8	static
 ..\Core\Src\stm32h7xx_it.c:207:6:EXTI1_IRQHandler	8	static
 ..\Core\Src\stm32h7xx_it.c:221:6:EXTI2_IRQHandler	8	static
-..\Core\Src\stm32h7xx_it.c:235:6:DMA1_Stream0_IRQHandler	8	static
-..\Core\Src\stm32h7xx_it.c:249:6:FDCAN2_IT0_IRQHandler	8	static
-..\Core\Src\stm32h7xx_it.c:263:6:OTG_FS_IRQHandler	8	static
-..\Core\Src\stm32h7xx_it.c:277:6:TIM15_IRQHandler	8	static
+..\Core\Src\stm32h7xx_it.c:235:6:EXTI4_IRQHandler	8	static
+..\Core\Src\stm32h7xx_it.c:249:6:DMA1_Stream0_IRQHandler	8	static
+..\Core\Src\stm32h7xx_it.c:263:6:FDCAN2_IT0_IRQHandler	8	static
+..\Core\Src\stm32h7xx_it.c:277:6:OTG_FS_IRQHandler	8	static
+..\Core\Src\stm32h7xx_it.c:291:6:TIM15_IRQHandler	8	static

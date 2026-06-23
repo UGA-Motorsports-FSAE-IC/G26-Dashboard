@@ -111,13 +111,11 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
 }
 
 
-void UpdateShiftLights(TIM_HandleTypeDef *htim, uint32_t Channel,
-		uint8_t *ledcolors, uint32_t *ledbytes,
-		int current_rpm, int * RPM_thresholds) {
+void UpdateShiftLights(TIM_HandleTypeDef *htim, uint32_t Channel, uint8_t *ledcolors, uint32_t *ledbytes, int current_rpm, int * RPM_thresholds) {
 
 	if (current_rpm > 13000) {
 
-		startUp(htim, Channel, ledcolors, ledbytes);
+		setColorAll(&htim2, TIM_CHANNEL_1, 0, 0, 255, ledcolors, ledbytes);
 
 	} else {
 
@@ -148,26 +146,24 @@ void lightOn(TIM_HandleTypeDef *htim, uint32_t Channel,
 		setColor(htim, Channel, 0, 0, 0, ledcolors, ledbytes, 1);
 		setColor(htim, Channel, 0, 0, 0, ledcolors, ledbytes, 14);
 		setColor(htim, Channel, 0, 0, 0, ledcolors, ledbytes, 15);
-
-		HAL_Delay(5);
 	}
 
 	if (index < 6) {
 
 		setColor(htim, Channel,
-				100, 0, 0,
+				150, 0, 0,
 				ledcolors, ledbytes, index);
 
 	} else if (index < 10) {
 
 		setColor(htim, Channel,
-				0, 100, 0,
+				0, 150, 0,
 				ledcolors, ledbytes, index);
 
 	} else if (index < 14){
 
 		setColor(htim, Channel,
-				0, 0, 100,
+				0, 0, 150,
 				ledcolors, ledbytes, index);
 	}
 }
@@ -189,7 +185,7 @@ void startUp(TIM_HandleTypeDef *htim, uint32_t Channel,
 				ledcolors, ledbytes,
 				middle + i + 1);
 
-		HAL_Delay(20);
+		HAL_Delay(5);
 	}
 
 	for (int i = 0; i < 6; i++) {
@@ -204,7 +200,7 @@ void startUp(TIM_HandleTypeDef *htim, uint32_t Channel,
 				ledcolors, ledbytes,
 				middle + i + 1);
 
-		HAL_Delay(20);
+		HAL_Delay(5);
 	}
 }
 

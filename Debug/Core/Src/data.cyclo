@@ -1,4 +1,4 @@
-..\Core\Src\data.c:34:6:lcdInit	1
-..\Core\Src\data.c:59:6:processCAN	10
-..\Core\Src\data.c:120:5:calculateGear	15
-..\Core\Src\data.c:140:6:shiftTask	3
+..\Core\Src\data.c:39:6:lcdInit	1
+..\Core\Src\data.c:53:6:processCAN	12
+..\Core\Src\data.c:126:5:calculateGear	15
+..\Core\Src\data.c:146:6:shiftTask	3

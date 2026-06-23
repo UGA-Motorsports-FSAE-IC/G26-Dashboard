@@ -1,13 +1,17 @@
 C:\ST\STM32CubeIDE_1.17.0\STM32CubeIDE\plugins\com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740\tools\arm-none-eabi\include\c++\14.3.1\arm-none-eabi\thumb\v7e-m+dp\hard\bits\gthr-default.h:229:1:int __gthread_key_delete(__gthread_key_t)	16	static
-..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:68:6:void changebackground(uint16_t)	32	static
-..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:72:6:void setrpmdata(char*)	32	static
-..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:78:6:void settempdata(char*, uint16_t)	32	static
-..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:85:6:void setgeardata(char*)	32	static
-..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:91:6:void setbattdata(char*)	32	static
-..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:97:6:void setspeeddata(char*)	32	static
-..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:110:6:void domainscreen()	8	static
-..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:115:6:void dodatascreen()	8	static
-..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:120:6:void dosplashscene()	8	static
-..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:125:6:void initdatascreen()	56	static
-..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:146:1:void __static_initialization_and_destruction_0()	32	static
-..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:146:1:cpp)	8	static
+..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:89:6:void changebackground(uint16_t)	32	static
+..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:93:6:void setrpmdata(char*)	32	static
+..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:99:6:void settempdata(char*)	32	static
+..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:106:6:void setgeardata(char*)	32	static
+..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:112:6:void setbattdata(char*)	32	static
+..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:118:6:void setspeeddata(char*)	32	static
+..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:124:6:void setsparkcut(char*, uint16_t)	32	static
+..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:131:6:void setairtankdata(char*)	32	static
+..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:137:6:void setoilpressuredata(char*)	32	static
+..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:143:6:void setshiftcountdata(char*)	32	static
+..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:150:6:void domainscreen()	8	static
+..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:155:6:void dodatascreen()	8	static
+..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:160:6:void dosplashscene()	8	static
+..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:165:6:void initdatascreen()	56	static
+..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:186:1:void __static_initialization_and_destruction_0()	32	static
+..\Core\Src\fmc-display\rpiSceneBuilderUser.cpp:186:1:cpp)	8	static

@@ -56,6 +56,8 @@ DMA2D_HandleTypeDef hdma2d;
 
 FDCAN_HandleTypeDef hfdcan2;
 
+IWDG_HandleTypeDef hiwdg1;
+
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim15;
 DMA_HandleTypeDef hdma_tim2_ch1;
@@ -77,6 +79,7 @@ static void MX_FMC_Init(void);
 static void MX_DMA2D_Init(void);
 static void MX_FDCAN2_Init(void);
 static void MX_TIM15_Init(void);
+static void MX_IWDG1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -87,9 +90,12 @@ uint8_t ledcolors[48];
 uint32_t ledbytes[(16 * 24) + 150] __attribute__((section(".nocache")));;
 extern uint16_t framebuffer[];
 
+char shiftCounterChar[20] = "";
 volatile uint8_t shiftCounter = 0;
 volatile uint32_t lastSendMs = 0;
 uint8_t shiftCommand;
+uint8_t sparkCutFlag = 0;
+uint8_t sparkCutCommand = 1;
 uint32_t lastShift = 0;
 
 uint8_t button1 = 0;
@@ -97,11 +103,12 @@ uint8_t button2 = 0;
 uint32_t btn1Hit;
 uint32_t btn2Hit;
 uint8_t currentScreen = 0;
+uint8_t resetFlag = 0;
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	uint32_t now = HAL_GetTick();
 
-	if ((now - lastShift) < 200)
+	if ((now - lastShift) < 250)
 		return;
 
 	lastShift = now;
@@ -114,8 +121,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	// Up Shift
 	shiftCounter++;
 	shiftCommand = 2;
+  } else if (GPIO_Pin == BTN1_Pin) {
+	resetFlag = 1;
   }
 }
+
 
 uint8_t timerBool = 0;
 
@@ -148,7 +158,6 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 uint32_t lastDraw = 0;
 
 void updateMainData(void) {
-  //while (HAL_FDCAN_GetRxFifoFillLevel(&hfdcan2, FDCAN_RX_FIFO0) > 0) {
   processCAN(id, rxData);
 }
 
@@ -234,18 +243,23 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 
   shiftLightsInit(&htim2, TIM_CHANNEL_1, ledcolors, ledbytes);
-  startUp(&htim2, TIM_CHANNEL_1, ledcolors, ledbytes);
+  //startUp(&htim2, TIM_CHANNEL_1, ledcolors, ledbytes);
   setColorAll(&htim2, TIM_CHANNEL_1, 0, 0, 0, ledcolors, ledbytes);
 
   HAL_TIM_Base_Start_IT(&htim15);
 
   lcdInit();
 
+  MX_IWDG1_Init();
+
   while (1) {
 
-	  if (timerBool && checkShift()) {
+	  HAL_IWDG_Refresh(&hiwdg1);
+
+	  if (checkShift() && timerBool == 1) {
 		FDCAN_TxHeaderTypeDef txShiftHeader;
 		uint8_t txData[8] = {0};
+		txData[2] = sparkCutCommand;
 		txData[1] = shiftCounter;
 		txData[0] = shiftCommand;
 
@@ -259,7 +273,10 @@ int main(void)
 		txShiftHeader.MessageMarker = 0;
 
 		HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txShiftHeader, txData);
+
 		timerBool = 0;
+		itoa(shiftCounter, shiftCounterChar, 10);
+		setshiftcountdata(shiftCounterChar);
 	  }
 
 	  if (dataRecieved) {
@@ -270,6 +287,11 @@ int main(void)
 	  if (HAL_GetTick() - lastDraw >= 50) {
 	      lastDraw = HAL_GetTick();
 	      domainscreen();
+	  }
+
+	  if (resetFlag) {
+		  NVIC_SystemReset();
+		  resetFlag = 0;
 	  }
 
     /* USER CODE END WHILE */
@@ -301,8 +323,10 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48|RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48|RCC_OSCILLATORTYPE_LSI
+                              |RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
@@ -444,6 +468,35 @@ static void MX_FDCAN2_Init(void)
   /* USER CODE BEGIN FDCAN2_Init 2 */
 
   /* USER CODE END FDCAN2_Init 2 */
+
+}
+
+/**
+  * @brief IWDG1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_IWDG1_Init(void)
+{
+
+  /* USER CODE BEGIN IWDG1_Init 0 */
+
+  /* USER CODE END IWDG1_Init 0 */
+
+  /* USER CODE BEGIN IWDG1_Init 1 */
+
+  /* USER CODE END IWDG1_Init 1 */
+  hiwdg1.Instance = IWDG1;
+  hiwdg1.Init.Prescaler = IWDG_PRESCALER_32;
+  hiwdg1.Init.Window = 4095;
+  hiwdg1.Init.Reload = 200;
+  if (HAL_IWDG_Init(&hiwdg1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN IWDG1_Init 2 */
+
+  /* USER CODE END IWDG1_Init 2 */
 
 }
 
@@ -667,6 +720,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : BTN1_Pin BTN4_Pin */
+  GPIO_InitStruct.Pin = BTN1_Pin|BTN4_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
   /*Configure GPIO pin : TS_CS_Pin */
   GPIO_InitStruct.Pin = TS_CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -700,6 +759,9 @@ static void MX_GPIO_Init(void)
 
   HAL_NVIC_SetPriority(PAD_A2_EXTI_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(PAD_A2_EXTI_IRQn);
+
+  HAL_NVIC_SetPriority(BTN1_EXTI_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(BTN1_EXTI_IRQn);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 

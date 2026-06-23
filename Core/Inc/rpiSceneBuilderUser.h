@@ -18,11 +18,14 @@ extern "C" {
 	void initdatascreen();
 	void changebackground(uint16_t color);
 	void setrpmdata(char *rpmvalue);
-	void settempdata(char *tempvalue, uint16_t color);
+	void settempdata(char *tempvalue);
 	void setgeardata(char *gearvalue);
 	void setbattdata(char *battvalue);
 	void setspeeddata(char *speedvalue);
-	void setoilpressuredata(char *oiltempvalue);
+	void setairtankdata(char *airtankvalue);
+	void setshiftcountdata(char * shiftcountvalue);
+	void setsparkcut(char *sparkcutvalue, uint16_t color);
+	void setoilpressuredata(char *oilpressurevalue);
 	void dosplashscene();
 #ifdef __cplusplus
 }
