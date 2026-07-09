@@ -104,6 +104,7 @@ uint32_t btn1Hit;
 uint32_t btn2Hit;
 uint8_t currentScreen = 0;
 uint8_t resetFlag = 0;
+uint8_t ledOn = 0;
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	uint32_t now = HAL_GetTick();
@@ -290,7 +291,9 @@ int main(void)
 	  }
 
 	  if (resetFlag) {
-		  NVIC_SystemReset();
+		  ledOn = !ledOn;
+		  uint8_t value = ledOn * 255;
+		  setColorAll(&htim2, TIM_CHANNEL_1, value, value, value, ledcolors, ledbytes);
 		  resetFlag = 0;
 	  }
 
