@@ -1,20 +1,20 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2025 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2025 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -64,6 +64,13 @@ DMA_HandleTypeDef hdma_tim2_ch1;
 
 SRAM_HandleTypeDef hsram1;
 
+/* Definitions for defaultTask */
+osThreadId_t defaultTaskHandle;
+const osThreadAttr_t defaultTask_attributes = {
+  .name = "defaultTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -80,6 +87,8 @@ static void MX_DMA2D_Init(void);
 static void MX_FDCAN2_Init(void);
 static void MX_TIM15_Init(void);
 static void MX_IWDG1_Init(void);
+void StartDefaultTask(void *argument);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -87,9 +96,9 @@ static void MX_IWDG1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 uint8_t ledcolors[48];
-uint32_t ledbytes[(16 * 24) + 150] __attribute__((section(".nocache")));;
+uint32_t ledbytes[(16 * 24) + 150] __attribute__((section(".nocache")));
+;
 extern uint16_t framebuffer[];
-
 char shiftCounterChar[20] = "";
 volatile uint8_t shiftCounter = 0;
 volatile uint32_t lastSendMs = 0;
@@ -97,7 +106,7 @@ uint8_t shiftCommand;
 uint8_t sparkCutFlag = 0;
 uint8_t sparkCutCommand = 1;
 uint32_t lastShift = 0;
-
+uint32_t lastDraw = 0;
 uint8_t button1 = 0;
 uint8_t button2 = 0;
 uint32_t btn1Hit;
@@ -106,39 +115,35 @@ uint8_t currentScreen = 0;
 uint8_t resetFlag = 0;
 uint8_t ledOn = 0;
 
+//GPIO Callback function for buttons and paddle shifters
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	uint32_t now = HAL_GetTick();
-
 	if ((now - lastShift) < 250)
 		return;
-
 	lastShift = now;
 
-  if (GPIO_Pin == PAD__Pin) {
-	// Down Shift
-	shiftCounter++;
-	shiftCommand = 1;
-  } else if (GPIO_Pin == PAD_A2_Pin) {
-	// Up Shift
-	shiftCounter++;
-	shiftCommand = 2;
-  } else if (GPIO_Pin == BTN1_Pin) {
-	resetFlag = 1;
-  }
+	if (GPIO_Pin == PAD__Pin) {
+		// Down Shift
+		shiftCounter++;
+		shiftCommand = 1;
+	} else if (GPIO_Pin == PAD_A2_Pin) {
+		// Up Shift
+		shiftCounter++;
+		shiftCommand = 2;
+	} else if (GPIO_Pin == BTN1_Pin) {
+		resetFlag = 1;
+	}
 }
 
-
+//Timer function for the use of delaying each screen refresh by around 50ms or higher.
 uint8_t timerBool = 0;
-
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (htim->Instance == TIM15) {
 		timerBool = 1;
 	}
 }
 
-
 FDCAN_FilterTypeDef canfilter;
-
 FDCAN_RxHeaderTypeDef rxHeader;
 uint8_t rxData[8];
 volatile uint8_t dataRecieved = 0;
@@ -146,20 +151,17 @@ uint32_t id;
 
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs) {
 
-  if ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET) {
+	if ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET) {
 
+		HAL_FDCAN_GetRxMessage(&hfdcan2, FDCAN_RX_FIFO0, &rxHeader, rxData);
 
-    HAL_FDCAN_GetRxMessage(&hfdcan2, FDCAN_RX_FIFO0, &rxHeader, rxData);
-
-    id = rxHeader.Identifier;
-    dataRecieved = 1;
-  }
+		id = rxHeader.Identifier;
+		dataRecieved = 1;
+	}
 }
 
-uint32_t lastDraw = 0;
-
 void updateMainData(void) {
-  processCAN(id, rxData);
+	processCAN(id, rxData);
 }
 
 extern uint16_t rpmVal;
@@ -170,6 +172,61 @@ int checkShift() {
 		return 0;
 	}
 	return 1;
+}
+
+
+/* Tasks */
+void shiftTask(void *arg) {
+	for (;;) {
+		if (checkShift() && timerBool == 1) {
+			FDCAN_TxHeaderTypeDef txShiftHeader;
+			uint8_t txData[8] = { 0 };
+			txData[2] = sparkCutCommand;
+			txData[1] = shiftCounter;
+			txData[0] = shiftCommand;
+
+			txShiftHeader.Identifier = 172;
+			txShiftHeader.IdType = FDCAN_STANDARD_ID;
+			txShiftHeader.TxFrameType = FDCAN_DATA_FRAME;
+			txShiftHeader.DataLength = FDCAN_DLC_BYTES_8;
+			txShiftHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
+			txShiftHeader.BitRateSwitch = FDCAN_BRS_OFF;
+			txShiftHeader.FDFormat = FDCAN_CLASSIC_CAN;
+			txShiftHeader.MessageMarker = 0;
+
+			HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txShiftHeader, txData);
+
+			timerBool = 0;
+			itoa(shiftCounter, shiftCounterChar, 10);
+			setshiftcountdata(shiftCounterChar);
+		}
+	}
+	osDelay(1);
+}
+
+void CANTask(void *argument) {
+	for (;;) {
+		if (dataRecieved) {
+			updateMainData();
+			dataRecieved = 0;
+		}
+	}
+}
+
+void displayTask(void *argument) {
+	for (;;) {
+		domainscreen();
+		osDelay(50);
+	}
+}
+
+void buttonTask(void *argument) {
+	for (;;) {
+		if (resetFlag) {
+			HAL_NVIC_SystemReset();
+			resetFlag = 0;
+		}
+	}
 }
 
 /* USER CODE END 0 */
@@ -202,7 +259,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  //__HAL_RCC_FMC_CLK_ENABLE();
+	//__HAL_RCC_FMC_CLK_ENABLE();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -221,9 +278,9 @@ int main(void)
   MX_TIM2_Init();
   MX_FMC_Init();
   MX_DMA2D_Init();
-  MX_USB_DEVICE_Init();
   MX_FDCAN2_Init();
   MX_TIM15_Init();
+  MX_IWDG1_Init();
   /* USER CODE BEGIN 2 */
 
 	canfilter.IdType = FDCAN_STANDARD_ID;
@@ -233,74 +290,62 @@ int main(void)
 	canfilter.FilterID1 = 0x000;
 	canfilter.FilterID2 = 0x000;
 
-  HAL_FDCAN_ConfigFilter(&hfdcan2, &canfilter);
-  HAL_FDCAN_Start(&hfdcan2);
-  HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
+	HAL_FDCAN_ConfigFilter(&hfdcan2, &canfilter);
+	HAL_FDCAN_Start(&hfdcan2);
+	HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
+	HAL_SetFMCMemorySwappingConfig(FMC_SWAPBMAP_SDRAM_SRAM);
+	HAL_TIM_Base_Start_IT(&htim15);
+	MX_IWDG1_Init();
 
-  HAL_SetFMCMemorySwappingConfig(FMC_SWAPBMAP_SDRAM_SRAM);
+	shiftLightsInit(&htim2, TIM_CHANNEL_1, ledcolors, ledbytes);
+	setColorAll(&htim2, TIM_CHANNEL_1, 0, 0, 0, ledcolors, ledbytes);
+	lcdInit();
+
   /* USER CODE END 2 */
+
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* creation of defaultTask */
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+  /* USER CODE END RTOS_THREADS */
+
+  /* USER CODE BEGIN RTOS_EVENTS */
+  /* add events, ... */
+  /* USER CODE END RTOS_EVENTS */
+
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  shiftLightsInit(&htim2, TIM_CHANNEL_1, ledcolors, ledbytes);
-  //startUp(&htim2, TIM_CHANNEL_1, ledcolors, ledbytes);
-  setColorAll(&htim2, TIM_CHANNEL_1, 0, 0, 0, ledcolors, ledbytes);
-
-  HAL_TIM_Base_Start_IT(&htim15);
-
-  lcdInit();
-
-  MX_IWDG1_Init();
-
-  while (1) {
-
-	  HAL_IWDG_Refresh(&hiwdg1);
-
-	  if (checkShift() && timerBool == 1) {
-		FDCAN_TxHeaderTypeDef txShiftHeader;
-		uint8_t txData[8] = {0};
-		txData[2] = sparkCutCommand;
-		txData[1] = shiftCounter;
-		txData[0] = shiftCommand;
-
-		txShiftHeader.Identifier = 172;
-		txShiftHeader.IdType = FDCAN_STANDARD_ID;
-		txShiftHeader.TxFrameType = FDCAN_DATA_FRAME;
-		txShiftHeader.DataLength = FDCAN_DLC_BYTES_8;
-		txShiftHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-		txShiftHeader.BitRateSwitch = FDCAN_BRS_OFF;
-		txShiftHeader.FDFormat = FDCAN_CLASSIC_CAN;
-		txShiftHeader.MessageMarker = 0;
-
-		HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txShiftHeader, txData);
-
-		timerBool = 0;
-		itoa(shiftCounter, shiftCounterChar, 10);
-		setshiftcountdata(shiftCounterChar);
-	  }
-
-	  if (dataRecieved) {
-		  updateMainData();
-		  dataRecieved = 0;
-	  }
-
-	  if (HAL_GetTick() - lastDraw >= 50) {
-	      lastDraw = HAL_GetTick();
-	      domainscreen();
-	  }
-
-	  if (resetFlag) {
-		  ledOn = !ledOn;
-		  uint8_t value = ledOn * 255;
-		  setColorAll(&htim2, TIM_CHANNEL_1, value, value, value, ledcolors, ledbytes);
-		  resetFlag = 0;
-	  }
+	while (1) {
 
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
+	}
+
   /* USER CODE END 3 */
 }
 
@@ -619,7 +664,7 @@ static void MX_DMA_Init(void)
 
   /* DMA interrupt init */
   /* DMA1_Stream0_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
 
 }
@@ -678,102 +723,29 @@ static void MX_FMC_Init(void)
   /* USER CODE END FMC_Init 2 */
 }
 
-/**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_GPIO_Init(void)
-{
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  /* USER CODE BEGIN MX_GPIO_Init_1 */
-
-  /* USER CODE END MX_GPIO_Init_1 */
-
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOE_CLK_ENABLE();
-  __HAL_RCC_GPIOH_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
-  __HAL_RCC_GPIOD_CLK_ENABLE();
-  __HAL_RCC_GPIOC_CLK_ENABLE();
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(PWR_LED_GPIO_Port, PWR_LED_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(TS_CS_GPIO_Port, TS_CS_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LCD_RST_GPIO_Port, LCD_RST_Pin, GPIO_PIN_SET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LEDTEST_GPIO_Port, LEDTEST_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin : PWR_LED_Pin */
-  GPIO_InitStruct.Pin = PWR_LED_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(PWR_LED_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PAD__Pin PAD_A2_Pin */
-  GPIO_InitStruct.Pin = PAD__Pin|PAD_A2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : BTN1_Pin BTN4_Pin */
-  GPIO_InitStruct.Pin = BTN1_Pin|BTN4_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : TS_CS_Pin */
-  GPIO_InitStruct.Pin = TS_CS_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(TS_CS_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : LCD_RST_Pin */
-  GPIO_InitStruct.Pin = LCD_RST_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LCD_RST_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : LEDTEST_Pin */
-  GPIO_InitStruct.Pin = LEDTEST_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LEDTEST_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : SDMMC1_MH_Pin */
-  GPIO_InitStruct.Pin = SDMMC1_MH_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(SDMMC1_MH_GPIO_Port, &GPIO_InitStruct);
-
-  /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(PAD__EXTI_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(PAD__EXTI_IRQn);
-
-  HAL_NVIC_SetPriority(PAD_A2_EXTI_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(PAD_A2_EXTI_IRQn);
-
-  HAL_NVIC_SetPriority(BTN1_EXTI_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(BTN1_EXTI_IRQn);
-
-  /* USER CODE BEGIN MX_GPIO_Init_2 */
-
-  /* USER CODE END MX_GPIO_Init_2 */
-}
-
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_StartDefaultTask */
+/**
+  * @brief  Function implementing the defaultTask thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void *argument)
+{
+  /* init code for USB_DEVICE */
+  MX_USB_DEVICE_Init();
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END 5 */
+}
 
  /* MPU Configuration */
 

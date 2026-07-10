@@ -31,6 +31,4 @@ void processCAN(int id, uint8_t *data);
 
 int calculateGear(uint16_t gv);
 
-void shiftTask(void);
-
 #endif

@@ -143,29 +143,3 @@ int calculateGear(uint16_t gv) {
 	}
 }
 
-void shiftTask(void)
-{
-    if (!shiftPending) {
-        return;
-    }
-
-	FDCAN_TxHeaderTypeDef txShiftHeader;
-	uint8_t txData[8] = {0};
-	txData[1] = uniqueId;
-	txData[0] = shiftCommand;
-
-	txShiftHeader.Identifier = 10;
-	txShiftHeader.IdType = FDCAN_EXTENDED_ID;
-	txShiftHeader.TxFrameType = FDCAN_DATA_FRAME;
-	txShiftHeader.DataLength = FDCAN_DLC_BYTES_8;
-	txShiftHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-	txShiftHeader.BitRateSwitch = FDCAN_BRS_OFF;
-	txShiftHeader.FDFormat = FDCAN_CLASSIC_CAN;
-	txShiftHeader.MessageMarker = 0;
-
-	if (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txShiftHeader, txData) == HAL_OK) {
-		lastSendMs = HAL_GetTick();
-		framesSent++;
-    }
-}
-
