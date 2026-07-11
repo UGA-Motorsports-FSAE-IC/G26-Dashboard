@@ -18,6 +18,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "FreeRTOS.h"
+#include "cmsis_os2.h"
 #include "usb_device.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -73,7 +75,6 @@ const osThreadAttr_t defaultTask_attributes = {
 };
 /* USER CODE BEGIN PV */
 
-/* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -174,61 +175,6 @@ int checkShift() {
 	return 1;
 }
 
-
-/* Tasks */
-void shiftTask(void *arg) {
-	for (;;) {
-		if (checkShift() && timerBool == 1) {
-			FDCAN_TxHeaderTypeDef txShiftHeader;
-			uint8_t txData[8] = { 0 };
-			txData[2] = sparkCutCommand;
-			txData[1] = shiftCounter;
-			txData[0] = shiftCommand;
-
-			txShiftHeader.Identifier = 172;
-			txShiftHeader.IdType = FDCAN_STANDARD_ID;
-			txShiftHeader.TxFrameType = FDCAN_DATA_FRAME;
-			txShiftHeader.DataLength = FDCAN_DLC_BYTES_8;
-			txShiftHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-			txShiftHeader.BitRateSwitch = FDCAN_BRS_OFF;
-			txShiftHeader.FDFormat = FDCAN_CLASSIC_CAN;
-			txShiftHeader.MessageMarker = 0;
-
-			HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txShiftHeader, txData);
-
-			timerBool = 0;
-			itoa(shiftCounter, shiftCounterChar, 10);
-			setshiftcountdata(shiftCounterChar);
-		}
-	}
-	osDelay(1);
-}
-
-void CANTask(void *argument) {
-	for (;;) {
-		if (dataRecieved) {
-			updateMainData();
-			dataRecieved = 0;
-		}
-	}
-}
-
-void displayTask(void *argument) {
-	for (;;) {
-		domainscreen();
-		osDelay(50);
-	}
-}
-
-void buttonTask(void *argument) {
-	for (;;) {
-		if (resetFlag) {
-			HAL_NVIC_SystemReset();
-			resetFlag = 0;
-		}
-	}
-}
-
 /* USER CODE END 0 */
 
 /**
@@ -301,7 +247,12 @@ int main(void)
 	setColorAll(&htim2, TIM_CHANNEL_1, 0, 0, 0, ledcolors, ledbytes);
 	lcdInit();
 
+
+	/* Call init function for freertos objects (in app_freertos.c) */
   /* USER CODE END 2 */
+
+  /* Init scheduler */
+  osKernelInitialize();
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
@@ -721,6 +672,99 @@ static void MX_FMC_Init(void)
   /* USER CODE BEGIN FMC_Init 2 */
 
   /* USER CODE END FMC_Init 2 */
+}
+
+/**
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_GPIO_Init(void)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  /* USER CODE BEGIN MX_GPIO_Init_1 */
+
+  /* USER CODE END MX_GPIO_Init_1 */
+
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_GPIOH_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(PWR_LED_GPIO_Port, PWR_LED_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(TS_CS_GPIO_Port, TS_CS_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(LCD_RST_GPIO_Port, LCD_RST_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(LEDTEST_GPIO_Port, LEDTEST_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : PWR_LED_Pin */
+  GPIO_InitStruct.Pin = PWR_LED_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(PWR_LED_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PAD__Pin PAD_A2_Pin */
+  GPIO_InitStruct.Pin = PAD__Pin|PAD_A2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : BTN1_Pin BTN4_Pin */
+  GPIO_InitStruct.Pin = BTN1_Pin|BTN4_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : TS_CS_Pin */
+  GPIO_InitStruct.Pin = TS_CS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(TS_CS_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : LCD_RST_Pin */
+  GPIO_InitStruct.Pin = LCD_RST_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(LCD_RST_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : LEDTEST_Pin */
+  GPIO_InitStruct.Pin = LEDTEST_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(LEDTEST_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : SDMMC1_MH_Pin */
+  GPIO_InitStruct.Pin = SDMMC1_MH_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(SDMMC1_MH_GPIO_Port, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(PAD__EXTI_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(PAD__EXTI_IRQn);
+
+  HAL_NVIC_SetPriority(PAD_A2_EXTI_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(PAD_A2_EXTI_IRQn);
+
+  HAL_NVIC_SetPriority(BTN1_EXTI_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(BTN1_EXTI_IRQn);
+
+  /* USER CODE BEGIN MX_GPIO_Init_2 */
+
+  /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
