@@ -114,11 +114,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	lastShift = now;
 
   if (GPIO_Pin == PAD__Pin) {
-	// Down Shift
+	// Up Shift
 	shiftCounter++;
 	shiftCommand = 1;
   } else if (GPIO_Pin == PAD_A2_Pin) {
-	// Up Shift
+	// Down Shift
 	shiftCounter++;
 	shiftCommand = 2;
   } else if (GPIO_Pin == BTN1_Pin) {
@@ -163,7 +163,7 @@ void updateMainData(void) {
 
 extern uint16_t rpmVal;
 int checkShift() {
-	if (shiftCommand == 2) {
+	if (shiftCommand == 1) {
 		return 1;
 	} else if (rpmVal > 10000) {
 		return 0;
@@ -293,7 +293,6 @@ int main(void)
 		  NVIC_SystemReset();
 		  resetFlag = 0;
 	  }
-
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
