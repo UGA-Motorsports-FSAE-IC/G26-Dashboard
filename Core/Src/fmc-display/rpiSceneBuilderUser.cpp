@@ -31,12 +31,10 @@ char airtankresult[20] = "";
 char airtanklabel[15] = "Air Tank: ";
 char sparkcutlabel[20] = "";
 char sparkcutstate[20] = "";
-char oilpressurelabel[20] = "";
+char oilpressurelabel[20] = "op";
 char oilpressureresult[20] = "";
-char shiftcountlabel[20] = "Shift Count: ";
-char shiftcountresult[20] = "";
 
-DisplayObject* otherobjects[19] = {
+DisplayObject* otherobjects[17] = {
 		new StringObject(200, 260, 0xFFFF, FREE_MONO_BOLD_24PT7B, NO_CENTER_OBJECT, rpmresult, 1),
 		new StringObject(350, 100, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, tempresult, 3),
 		new StringObject(350, 60, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, battresult, 6),
@@ -52,13 +50,11 @@ DisplayObject* otherobjects[19] = {
 		new StringObject(40, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, airtankresult, 13),
 		new StringObject(160, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, sparkcutlabel, 14),
 		new StringObject(40, 20, 0x3f07, FREE_SANS_18PT7B, CENTER_OBJECT, sparkcutstate, 15),
-		new StringObject(400, 140, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, oilpressurelabel, 16),
-		new StringObject(350, 140, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, oilpressureresult, 17),
-		new StringObject(170, 50, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, shiftcountlabel, 18),
-		new StringObject(40, 50, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, shiftcountresult, 19)
+		new StringObject(400, 145, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, oilpressurelabel, 16),
+		new StringObject(350, 145, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, oilpressureresult, 17),
 };
 
-Scene myScene2(otherobjects, 19);
+Scene myScene2(otherobjects, 17);
 
 
 char rpmresult2[17] = "";
@@ -73,15 +69,6 @@ char* datascreengrid[] = {rpm2, oiltemp2, gear2, batt2};
 char* griddata[] = {rpmresult2, oiltempresult2, gearresult2, battresult2};
 DisplayObject* dataobjects[12];
 Scene myScene3(dataobjects, 12);
-
-
-
-
-char *image = "splash.bin";
-DisplayObject* splashobjects[1] = {
-		new ImageObject(image, SPLASH_LENGTH, SPLASH_HEIGHT, 240, 160, CENTER_OBJECT, 2)
-};
-Scene splashScene(splashobjects, 1);
 
 
 
@@ -137,18 +124,11 @@ void setairtankdata(char *airtankvalue) {
 void setoilpressuredata(char *oilpressurevalue) {
 	strncpy(oilpressureresult, "", 10);
 	strncat(oilpressureresult, oilpressurevalue, 10);
-	((StringObject*)otherobjects[16])->updateString(oilpressureresult, CENTER_OBJECT, 0xFFFF, FREE_SANS_18PT7B, 350, 140, 17);
+	((StringObject*)otherobjects[16])->updateString(oilpressureresult, CENTER_OBJECT, 0xFFFF, FREE_SANS_18PT7B, 350, 145, 17);
 }
-
-void setshiftcountdata(char *shiftcountvalue) {
-	strncpy(shiftcountresult, "", 10);
-	strncat(shiftcountresult, shiftcountvalue, 10);
-	((StringObject*)otherobjects[18])->updateString(shiftcountresult, CENTER_OBJECT, 0xFFFF, FREE_SANS_18PT7B, 40, 50, 19);
-}
-
 
 void domainscreen() {
-	myScene2.setScene(otherobjects, 19);
+	myScene2.setScene(otherobjects, 17);
 	myScene2.drawScene();
 }
 
@@ -157,23 +137,19 @@ void dodatascreen() {
 	myScene3.drawScene();
 }
 
-void dosplashscene() {
-	splashScene.drawScene();
-	splashScene.setScene(splashobjects, 1);
-}
 
 void initdatascreen() {
 	int length = sizeof(datascreengrid) / sizeof(datascreengrid[0]);
 	int x = 0;
 	int y = 0;
-	for(int i = 0; i < length; i++) {
+	for (int i = 0; i < length; i++) {
 		dataobjects[i] = new StringObject(x, y, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, datascreengrid[i], i);
 		y += 30;
 	}
 	x = 0;
 	y = 0;
-	for(int i = 0; i < length; i++) {
-		dataobjects[i] = new StringObject(x, y, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, griddata[i], i+length);
+	for (int i = 0; i < length; i++) {
+		dataobjects[i] = new StringObject(x, y, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, griddata[i], i + length);
 		y += 30;
 	}
 	x = 0;
@@ -184,4 +160,19 @@ void initdatascreen() {
 	}
 	dodatascreen();
 }
+
+/*
+char *image = "splash.bin";
+DisplayObject* splashobjects[1] = {
+		new ImageObject(image, SPLASH_LENGTH, SPLASH_HEIGHT, 240, 160, CENTER_OBJECT, 2)
+};
+Scene splashScene(splashobjects, 1);
+*/
+
+/*
+void dosplashscene() {
+	splashScene.drawScene();
+	splashScene.setScene(splashobjects, 1);
+}
+*/
 

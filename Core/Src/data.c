@@ -45,8 +45,8 @@ void lcdInit() {
     setbattdata(batt);
     setspeeddata(speed);
     setairtankdata(airtank);
-    setshiftcountdata(shiftcount);
-    //setoilpressuredata(oilpressure);
+    //setshiftcountdata(shiftcount);
+    setoilpressuredata(oilpressure);
     domainscreen();
 }
 
@@ -81,7 +81,7 @@ void processCAN(int id, uint8_t *data) {
             uint16_t tempVal = ((uint16_t)data[6] << 8) + data[7];
             tempVal /= 10;
             if (tempVal > 220) {
-            	setColor(&htim2, TIM_CHANNEL_1, 200, 0, 0, ledcolors, ledbytes, 15);
+            	setColor(&htim2, TIM_CHANNEL_1, 0, 200, 0, ledcolors, ledbytes, 15);
             } else {
             	setColor(&htim2, TIM_CHANNEL_1, 0, 0, 0, ledcolors, ledbytes, 15);
             }
@@ -113,7 +113,7 @@ void processCAN(int id, uint8_t *data) {
         	itoa(airtankval, airtank, 10);
         	setairtankdata(airtank);
         }
-
+        /*
         case BSPDCANID: {
         	uint16_t value = ((uint16_t)data[5] << 8) + data[4];
         	if (value < 1800) {
@@ -124,13 +124,14 @@ void processCAN(int id, uint8_t *data) {
         		setColor(&htim2, TIM_CHANNEL_1, 255, 150, 0, ledcolors, ledbytes, 1);
         	}
         }
-        /*
+        */
+
         case OILPRESSURECANID: {
 			uint16_t oilpressureval = ((uint16_t)data[5] << 8) + data[4];
+			oilpressureval /= 10;
 			itoa(oilpressureval, oilpressure, 10);
-			setairtankdata(oilpressure);
+			setoilpressuredata(oilpressure);
 		}
-		*/
     }
 }
 

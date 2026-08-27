@@ -1,4 +1,4 @@
 ..\Core\Src\data.c:39:6:lcdInit	8	static
 ..\Core\Src\data.c:53:6:processCAN	88	static
-..\Core\Src\data.c:137:5:calculateGear	16	static
-..\Core\Src\data.c:157:6:shiftTask	56	static
+..\Core\Src\data.c:138:5:calculateGear	16	static
+..\Core\Src\data.c:158:6:shiftTask	56	static

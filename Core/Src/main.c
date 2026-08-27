@@ -275,8 +275,6 @@ int main(void)
 		HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txShiftHeader, txData);
 
 		timerBool = 0;
-		itoa(shiftCounter, shiftCounterChar, 10);
-		setshiftcountdata(shiftCounterChar);
 	  }
 
 	  if (dataRecieved) {
