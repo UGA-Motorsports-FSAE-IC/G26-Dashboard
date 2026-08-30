@@ -223,6 +223,7 @@ int main(void)
   MX_USB_DEVICE_Init();
   MX_FDCAN2_Init();
   MX_TIM15_Init();
+  MX_IWDG1_Init();
   /* USER CODE BEGIN 2 */
 
 	canfilter.IdType = FDCAN_STANDARD_ID;
@@ -373,7 +374,7 @@ void PeriphCommonClock_Config(void)
   PeriphClkInitStruct.PLL2.PLL2M = 2;
   PeriphClkInitStruct.PLL2.PLL2N = 48;
   PeriphClkInitStruct.PLL2.PLL2P = 2;
-  PeriphClkInitStruct.PLL2.PLL2Q = 52;
+  PeriphClkInitStruct.PLL2.PLL2Q = 26;
   PeriphClkInitStruct.PLL2.PLL2R = 6;
   PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2VCIRANGE_3;
   PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2VCOWIDE;

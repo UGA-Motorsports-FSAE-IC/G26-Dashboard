@@ -21,6 +21,7 @@
 #define AIRTANKCANID 212
 #define OILPRESSURECANID 210
 #define BSPDCANID 214
+#define WSCANID 190
 
 
 void lcdInit();

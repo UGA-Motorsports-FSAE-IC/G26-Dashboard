@@ -26,6 +26,7 @@ extern "C" {
 	void setshiftcountdata(char * shiftcountvalue);
 	void setsparkcut(char *sparkcutvalue, uint16_t color);
 	void setoilpressuredata(char *oilpressurevalue);
+	void setwheelspeeddata(char *wsvalues);
 	void dosplashscene();
 #ifdef __cplusplus
 }

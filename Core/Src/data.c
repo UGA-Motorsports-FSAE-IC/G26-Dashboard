@@ -25,6 +25,7 @@ char airtank[20] = "null";
 char sparkcut[20] = "ON";
 char oilpressure[20] = "null";
 char shiftcount[20] = "null";
+char ws[50] = "null";
 
 uint16_t rpmVal;
 
@@ -47,6 +48,7 @@ void lcdInit() {
     setairtankdata(airtank);
     //setshiftcountdata(shiftcount);
     setoilpressuredata(oilpressure);
+    setwheelspeeddata(ws);
     domainscreen();
 }
 
@@ -112,6 +114,7 @@ void processCAN(int id, uint8_t *data) {
         	float airtankval = (volts * 1250.0f) - 625.0f;
         	itoa(airtankval, airtank, 10);
         	setairtankdata(airtank);
+        	break;
         }
         /*
         case BSPDCANID: {
@@ -131,7 +134,22 @@ void processCAN(int id, uint8_t *data) {
 			oilpressureval /= 10;
 			itoa(oilpressureval, oilpressure, 10);
 			setoilpressuredata(oilpressure);
+			break;
 		}
+
+        case WSCANID: {
+        	//snprintf(ws, sizeof(ws), "%u %u %u %u", data[0], data[1], data[2], data[3]);
+        	char wsint[10];
+        	char wsdec[10];
+        	itoa(data[1], wsint, 10);
+			itoa(data[5], wsdec, 10);
+			strncpy(ws, "", 20);
+			strncat(ws, wsint, 5);
+			strncat(ws, ".", 5);
+			strncat(ws, wsdec, 1);
+        	setwheelspeeddata(ws);
+        	break;
+        }
     }
 }
 

@@ -33,8 +33,10 @@ char sparkcutlabel[20] = "";
 char sparkcutstate[20] = "";
 char oilpressurelabel[20] = "op";
 char oilpressureresult[20] = "";
+char wslabel[20] = "WS: ";
+char wsresult[50] = "";
 
-DisplayObject* otherobjects[17] = {
+DisplayObject* otherobjects[50] = {
 		new StringObject(200, 260, 0xFFFF, FREE_MONO_BOLD_24PT7B, NO_CENTER_OBJECT, rpmresult, 1),
 		new StringObject(350, 100, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, tempresult, 3),
 		new StringObject(350, 60, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, battresult, 6),
@@ -52,9 +54,11 @@ DisplayObject* otherobjects[17] = {
 		new StringObject(40, 20, 0x3f07, FREE_SANS_18PT7B, CENTER_OBJECT, sparkcutstate, 15),
 		new StringObject(400, 145, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, oilpressurelabel, 16),
 		new StringObject(350, 145, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, oilpressureresult, 17),
+		new StringObject(340, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, wsresult, 18),
+		new StringObject(420, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, wslabel, 19),
 };
 
-Scene myScene2(otherobjects, 17);
+Scene myScene2(otherobjects, 19);
 
 
 char rpmresult2[17] = "";
@@ -127,8 +131,14 @@ void setoilpressuredata(char *oilpressurevalue) {
 	((StringObject*)otherobjects[16])->updateString(oilpressureresult, CENTER_OBJECT, 0xFFFF, FREE_SANS_18PT7B, 350, 145, 17);
 }
 
+void setwheelspeeddata(char *wsvalues) {
+	strncpy(wsresult, "", 10);
+	strncat(wsresult, wsvalues, 10);
+	((StringObject*)otherobjects[17])->updateString(wsresult, CENTER_OBJECT, 0xFFFF, FREE_SANS_18PT7B, 340, 20, 18);
+}
+
 void domainscreen() {
-	myScene2.setScene(otherobjects, 17);
+	myScene2.setScene(otherobjects, 19);
 	myScene2.drawScene();
 }
 
