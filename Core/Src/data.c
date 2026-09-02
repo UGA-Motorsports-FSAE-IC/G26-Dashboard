@@ -131,22 +131,26 @@ void processCAN(int id, uint8_t *data) {
 
         case OILPRESSURECANID: {
 			uint16_t oilpressureval = ((uint16_t)data[5] << 8) + data[4];
-			oilpressureval /= 10;
+			//oilpressureval /= 10;
+			//itoa(oilpressureval, oilpressure, 10);
+			oilpressureval = -18.1f + (((oilpressureval / 4096) * 5) - .5f) * 45.3f;
 			itoa(oilpressureval, oilpressure, 10);
 			setoilpressuredata(oilpressure);
 			break;
 		}
 
         case WSCANID: {
-        	//snprintf(ws, sizeof(ws), "%u %u %u %u", data[0], data[1], data[2], data[3]);
+        	snprintf(ws, sizeof(ws), "%u.%u %u.%u", data[2], data[3], data[4], data[5]);
+        	/*
         	char wsint[10];
         	char wsdec[10];
-        	itoa(data[1], wsint, 10);
-			itoa(data[5], wsdec, 10);
+        	itoa(data[2], wsint, 10);
+			itoa(data[3], wsdec, 10);
 			strncpy(ws, "", 20);
 			strncat(ws, wsint, 5);
 			strncat(ws, ".", 5);
-			strncat(ws, wsdec, 1);
+			strncat(ws, wsdec, 2);
+			*/
         	setwheelspeeddata(ws);
         	break;
         }

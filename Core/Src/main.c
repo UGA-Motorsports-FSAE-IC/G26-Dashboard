@@ -244,7 +244,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 
   shiftLightsInit(&htim2, TIM_CHANNEL_1, ledcolors, ledbytes);
-  //startUp(&htim2, TIM_CHANNEL_1, ledcolors, ledbytes);
+  startUp(&htim2, TIM_CHANNEL_1, ledcolors, ledbytes);
   setColorAll(&htim2, TIM_CHANNEL_1, 0, 0, 0, ledcolors, ledbytes);
 
   HAL_TIM_Base_Start_IT(&htim15);
@@ -487,7 +487,7 @@ static void MX_IWDG1_Init(void)
   hiwdg1.Instance = IWDG1;
   hiwdg1.Init.Prescaler = IWDG_PRESCALER_32;
   hiwdg1.Init.Window = 4095;
-  hiwdg1.Init.Reload = 200;
+  hiwdg1.Init.Reload = 999;
   if (HAL_IWDG_Init(&hiwdg1) != HAL_OK)
   {
     Error_Handler();

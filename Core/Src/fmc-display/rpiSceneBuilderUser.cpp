@@ -33,7 +33,7 @@ char sparkcutlabel[20] = "";
 char sparkcutstate[20] = "";
 char oilpressurelabel[20] = "op";
 char oilpressureresult[20] = "";
-char wslabel[20] = "WS: ";
+char wslabel[20] = "WS ";
 char wsresult[50] = "";
 
 DisplayObject* otherobjects[50] = {
@@ -55,7 +55,7 @@ DisplayObject* otherobjects[50] = {
 		new StringObject(400, 145, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, oilpressurelabel, 16),
 		new StringObject(350, 145, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, oilpressureresult, 17),
 		new StringObject(340, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, wsresult, 18),
-		new StringObject(420, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, wslabel, 19),
+		new StringObject(440, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, wslabel, 19),
 };
 
 Scene myScene2(otherobjects, 19);
@@ -133,7 +133,7 @@ void setoilpressuredata(char *oilpressurevalue) {
 
 void setwheelspeeddata(char *wsvalues) {
 	strncpy(wsresult, "", 10);
-	strncat(wsresult, wsvalues, 10);
+	strncat(wsresult, wsvalues, 32);
 	((StringObject*)otherobjects[17])->updateString(wsresult, CENTER_OBJECT, 0xFFFF, FREE_SANS_18PT7B, 340, 20, 18);
 }
 
