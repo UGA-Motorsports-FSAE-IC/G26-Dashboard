@@ -18,11 +18,13 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "fatfs.h"
 #include "usb_device.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "lcd_io.h"
+#include "fatfs.h"
 #include "rpiDisplayShapes.h"
 #include "FreeMonoBold24pt7b.h"
 #include "FreeSans18pt7b.h"
@@ -33,6 +35,7 @@
 #include "data.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -58,6 +61,8 @@ FDCAN_HandleTypeDef hfdcan2;
 
 IWDG_HandleTypeDef hiwdg1;
 
+SD_HandleTypeDef hsd2;
+
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim15;
 DMA_HandleTypeDef hdma_tim2_ch1;
@@ -80,6 +85,7 @@ static void MX_DMA2D_Init(void);
 static void MX_FDCAN2_Init(void);
 static void MX_TIM15_Init(void);
 static void MX_IWDG1_Init(void);
+static void MX_SDMMC2_SD_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -171,6 +177,63 @@ int checkShift() {
 	return 1;
 }
 
+// External references to shift lights implementation
+extern TIM_HandleTypeDef htim2;
+
+uint8_t test_SD_Card(void) {
+	FATFS fs;
+	FIL fil;
+	FRESULT fres;
+	UINT bytesWritten, bytesRead;
+	char writeBuf[] = "UGA Motorsports SD Test OK!";
+	char readBuf[64] = {0};
+
+	// 1. Mount SD Card
+	fres = f_mount(&fs, SDPath, 1);
+	if (fres != FR_OK) {
+		return 0; // Mount Failed
+	}
+
+	// 2. Open file for writing
+	fres = f_open(&fil, "sd_test.txt", FA_CREATE_ALWAYS | FA_WRITE);
+	if (fres != FR_OK) {
+		f_mount(NULL, SDPath, 0);
+		return 0; // File open failed
+	}
+
+	// 3. Write Data
+	fres = f_write(&fil, writeBuf, strlen(writeBuf), &bytesWritten);
+	if (fres != FR_OK || bytesWritten != strlen(writeBuf)) {
+		f_close(&fil);
+		f_mount(NULL, SDPath, 0);
+		return 0; // Write failed
+	}
+	f_close(&fil);
+
+	// 4. Open file for reading
+	fres = f_open(&fil, "sd_test.txt", FA_READ);
+	if (fres != FR_OK) {
+		f_mount(NULL, SDPath, 0);
+		return 0; // Read open failed
+	}
+
+	//5. Read data back
+	fres = f_read(&fil, readBuf, sizeof(readBuf) - 1, &bytesRead);
+	readBuf[bytesRead] = '\0'; // Manually seal the end of the text string
+	f_close(&fil);
+	f_mount(NULL, SDPath, 0); // Unmount
+
+	if (fres != FR_OK) {
+		return 0; // Read failed
+	}
+
+	//6. Compare payloads
+	if (strcmp(writeBuf, readBuf) ==0){
+		return 1; // Test passed
+	}
+
+	return 0; // Data mismatch
+}
 /* USER CODE END 0 */
 
 /**
@@ -224,6 +287,8 @@ int main(void)
   MX_FDCAN2_Init();
   MX_TIM15_Init();
   MX_IWDG1_Init();
+  MX_SDMMC2_SD_Init();
+  MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
 
 	canfilter.IdType = FDCAN_STANDARD_ID;
@@ -238,6 +303,16 @@ int main(void)
   HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
 
   HAL_SetFMCMemorySwappingConfig(FMC_SWAPBMAP_SDRAM_SRAM);
+
+  // --- SD Card & Shift Lights Test ---
+  if (test_SD_Card()) {
+      // SUCCESS: All Green (green=255, red=0, blue=0)[cite: 1]
+      setColorAll(&htim2, TIM_CHANNEL_1, 255, 0, 0, ledcolors, ledbytes);
+  } else {
+      // FAILURE: All Red (green=0, red=255, blue=0)[cite: 1]
+      setColorAll(&htim2, TIM_CHANNEL_1, 0, 255, 0, ledcolors, ledbytes);
+  }
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -370,7 +445,8 @@ void PeriphCommonClock_Config(void)
 
   /** Initializes the peripherals clock
   */
-  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_FMC|RCC_PERIPHCLK_FDCAN;
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_FMC|RCC_PERIPHCLK_SDMMC
+                              |RCC_PERIPHCLK_FDCAN;
   PeriphClkInitStruct.PLL2.PLL2M = 2;
   PeriphClkInitStruct.PLL2.PLL2N = 48;
   PeriphClkInitStruct.PLL2.PLL2P = 2;
@@ -380,6 +456,7 @@ void PeriphCommonClock_Config(void)
   PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2VCOWIDE;
   PeriphClkInitStruct.PLL2.PLL2FRACN = 0;
   PeriphClkInitStruct.FmcClockSelection = RCC_FMCCLKSOURCE_PLL2;
+  PeriphClkInitStruct.SdmmcClockSelection = RCC_SDMMCCLKSOURCE_PLL2;
   PeriphClkInitStruct.FdcanClockSelection = RCC_FDCANCLKSOURCE_PLL2;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
@@ -495,6 +572,37 @@ static void MX_IWDG1_Init(void)
   /* USER CODE BEGIN IWDG1_Init 2 */
 
   /* USER CODE END IWDG1_Init 2 */
+
+}
+
+/**
+  * @brief SDMMC2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SDMMC2_SD_Init(void)
+{
+
+  /* USER CODE BEGIN SDMMC2_Init 0 */
+
+  /* USER CODE END SDMMC2_Init 0 */
+
+  /* USER CODE BEGIN SDMMC2_Init 1 */
+
+  /* USER CODE END SDMMC2_Init 1 */
+  hsd2.Instance = SDMMC2;
+  hsd2.Init.ClockEdge = SDMMC_CLOCK_EDGE_RISING;
+  hsd2.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_DISABLE;
+  hsd2.Init.BusWide = SDMMC_BUS_WIDE_4B;
+  hsd2.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_DISABLE;
+  hsd2.Init.ClockDiv = 8;
+  if (HAL_SD_Init(&hsd2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SDMMC2_Init 2 */
+
+  /* USER CODE END SDMMC2_Init 2 */
 
 }
 
@@ -688,10 +796,10 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
-  __HAL_RCC_GPIOC_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(PWR_LED_GPIO_Port, PWR_LED_Pin, GPIO_PIN_RESET);
