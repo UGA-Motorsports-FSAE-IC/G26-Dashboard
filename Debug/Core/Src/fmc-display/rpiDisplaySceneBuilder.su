@@ -13,38 +13,39 @@
 ..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:94:6:void DisplayObject::setpriority(uint8_t)	16	static
 ..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:98:9:uint8_t DisplayObject::getChangeFlag()	16	static
 ../Core/Inc/rpiDisplaySceneBuilder.h:16:7:DisplayObject::DisplayObject()	16	static
-..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:106:1:StringObject::StringObject(uint16_t, uint16_t, uint16_t, const GFXfont*, uint8_t, char*, uint8_t)	24	static
-..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:117:10:virtual uint16_t StringObject::drawIntoFramebuffer(uint16_t*, uint16_t, uint16_t)	64	static
-..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:121:6:void StringObject::updateString(char*, uint8_t, uint16_t, const GFXfont*, uint16_t, uint16_t, uint8_t)	24	static
-..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:136:1:FilledRectObject::FilledRectObject(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint8_t, uint8_t)	24	static
-..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:147:10:virtual uint16_t FilledRectObject::drawIntoFramebuffer(uint16_t*, uint16_t, uint16_t)	64	static
-..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:152:6:void FilledRectObject::updateRect(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint8_t)	24	static
-..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:166:1:OutlineRectObject::OutlineRectObject(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint8_t, uint8_t)	24	static
-..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:177:10:virtual uint16_t OutlineRectObject::drawIntoFramebuffer(uint16_t*, uint16_t, uint16_t)	64	static
-..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:182:6:void OutlineRectObject::updateRect(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint8_t)	24	static
-..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:196:1:FilledEllipseObject::FilledEllipseObject(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint8_t, uint8_t)	24	static
-..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:207:10:virtual uint16_t FilledEllipseObject::drawIntoFramebuffer(uint16_t*, uint16_t, uint16_t)	64	static
-..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:212:6:void FilledEllipseObject::updateEllipse(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint8_t)	24	static
-..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:226:1:OutlineEllipseObject::OutlineEllipseObject(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint8_t, uint8_t)	24	static
-..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:237:10:virtual uint16_t OutlineEllipseObject::drawIntoFramebuffer(uint16_t*, uint16_t, uint16_t)	64	static
-..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:242:6:void OutlineEllipseObject::updateEllipse(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint8_t)	24	static
-..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:252:1:PointObject::PointObject(uint16_t, uint16_t, uint16_t, uint16_t)	24	static
-..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:260:10:virtual uint16_t PointObject::drawIntoFramebuffer(uint16_t*, uint16_t, uint16_t)	40	static
-..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:265:6:void PointObject::updatePoint(uint16_t, uint16_t, uint16_t, uint8_t)	24	static
-..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:277:1:ImageObject::ImageObject(char*, uint16_t, uint16_t, uint16_t, uint16_t, uint8_t, uint8_t)	40	static
-..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:281:10:virtual uint16_t ImageObject::drawIntoFramebuffer(uint16_t*, uint16_t, uint16_t)	24	static
-..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:286:6:void ImageObject::updateImage(char*, uint16_t, uint16_t, uint16_t, uint16_t, uint8_t, uint8_t)	24	static
-../Core/Inc/rpiDisplaySceneBuilder.h:118:7:ImageObject::~ImageObject()	16	static
-../Core/Inc/rpiDisplaySceneBuilder.h:118:7:virtual ImageObject::~ImageObject()	16	static
-../Core/Inc/rpiDisplaySceneBuilder.h:109:7:PointObject::~PointObject()	16	static
-../Core/Inc/rpiDisplaySceneBuilder.h:109:7:virtual PointObject::~PointObject()	16	static
-../Core/Inc/rpiDisplaySceneBuilder.h:97:7:OutlineEllipseObject::~OutlineEllipseObject()	16	static
-../Core/Inc/rpiDisplaySceneBuilder.h:97:7:virtual OutlineEllipseObject::~OutlineEllipseObject()	16	static
-../Core/Inc/rpiDisplaySceneBuilder.h:85:7:FilledEllipseObject::~FilledEllipseObject()	16	static
-../Core/Inc/rpiDisplaySceneBuilder.h:85:7:virtual FilledEllipseObject::~FilledEllipseObject()	16	static
-../Core/Inc/rpiDisplaySceneBuilder.h:73:7:OutlineRectObject::~OutlineRectObject()	16	static
-../Core/Inc/rpiDisplaySceneBuilder.h:73:7:virtual OutlineRectObject::~OutlineRectObject()	16	static
-../Core/Inc/rpiDisplaySceneBuilder.h:61:7:FilledRectObject::~FilledRectObject()	16	static
-../Core/Inc/rpiDisplaySceneBuilder.h:61:7:virtual FilledRectObject::~FilledRectObject()	16	static
+..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:106:1:StringObject::StringObject(uint16_t, uint16_t, uint16_t, const GFXfont*, uint8_t, char*, uint16_t, uint8_t)	24	static
+..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:118:10:virtual uint16_t StringObject::drawIntoFramebuffer(uint16_t*, uint16_t, uint16_t)	64	static
+..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:122:6:void StringObject::updateString(char*, uint8_t, uint16_t, const GFXfont*, uint16_t, uint16_t, uint8_t)	24	static
+..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:133:6:void StringObject::updateText(char*)	16	static
+..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:143:1:FilledRectObject::FilledRectObject(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint8_t, uint8_t)	24	static
+..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:154:10:virtual uint16_t FilledRectObject::drawIntoFramebuffer(uint16_t*, uint16_t, uint16_t)	64	static
+..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:159:6:void FilledRectObject::updateRect(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint8_t)	24	static
+..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:173:1:OutlineRectObject::OutlineRectObject(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint8_t, uint8_t)	24	static
+..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:184:10:virtual uint16_t OutlineRectObject::drawIntoFramebuffer(uint16_t*, uint16_t, uint16_t)	64	static
+..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:189:6:void OutlineRectObject::updateRect(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint8_t)	24	static
+..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:203:1:FilledEllipseObject::FilledEllipseObject(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint8_t, uint8_t)	24	static
+..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:214:10:virtual uint16_t FilledEllipseObject::drawIntoFramebuffer(uint16_t*, uint16_t, uint16_t)	64	static
+..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:219:6:void FilledEllipseObject::updateEllipse(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint8_t)	24	static
+..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:233:1:OutlineEllipseObject::OutlineEllipseObject(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint8_t, uint8_t)	24	static
+..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:244:10:virtual uint16_t OutlineEllipseObject::drawIntoFramebuffer(uint16_t*, uint16_t, uint16_t)	64	static
+..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:249:6:void OutlineEllipseObject::updateEllipse(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint8_t)	24	static
+..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:259:1:PointObject::PointObject(uint16_t, uint16_t, uint16_t, uint16_t)	24	static
+..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:267:10:virtual uint16_t PointObject::drawIntoFramebuffer(uint16_t*, uint16_t, uint16_t)	40	static
+..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:272:6:void PointObject::updatePoint(uint16_t, uint16_t, uint16_t, uint8_t)	24	static
+..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:284:1:ImageObject::ImageObject(char*, uint16_t, uint16_t, uint16_t, uint16_t, uint8_t, uint8_t)	40	static
+..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:288:10:virtual uint16_t ImageObject::drawIntoFramebuffer(uint16_t*, uint16_t, uint16_t)	24	static
+..\Core\Src\fmc-display\rpiDisplaySceneBuilder.cpp:293:6:void ImageObject::updateImage(char*, uint16_t, uint16_t, uint16_t, uint16_t, uint8_t, uint8_t)	24	static
+../Core/Inc/rpiDisplaySceneBuilder.h:120:7:ImageObject::~ImageObject()	16	static
+../Core/Inc/rpiDisplaySceneBuilder.h:120:7:virtual ImageObject::~ImageObject()	16	static
+../Core/Inc/rpiDisplaySceneBuilder.h:111:7:PointObject::~PointObject()	16	static
+../Core/Inc/rpiDisplaySceneBuilder.h:111:7:virtual PointObject::~PointObject()	16	static
+../Core/Inc/rpiDisplaySceneBuilder.h:99:7:OutlineEllipseObject::~OutlineEllipseObject()	16	static
+../Core/Inc/rpiDisplaySceneBuilder.h:99:7:virtual OutlineEllipseObject::~OutlineEllipseObject()	16	static
+../Core/Inc/rpiDisplaySceneBuilder.h:87:7:FilledEllipseObject::~FilledEllipseObject()	16	static
+../Core/Inc/rpiDisplaySceneBuilder.h:87:7:virtual FilledEllipseObject::~FilledEllipseObject()	16	static
+../Core/Inc/rpiDisplaySceneBuilder.h:75:7:OutlineRectObject::~OutlineRectObject()	16	static
+../Core/Inc/rpiDisplaySceneBuilder.h:75:7:virtual OutlineRectObject::~OutlineRectObject()	16	static
+../Core/Inc/rpiDisplaySceneBuilder.h:63:7:FilledRectObject::~FilledRectObject()	16	static
+../Core/Inc/rpiDisplaySceneBuilder.h:63:7:virtual FilledRectObject::~FilledRectObject()	16	static
 ../Core/Inc/rpiDisplaySceneBuilder.h:49:7:StringObject::~StringObject()	16	static
 ../Core/Inc/rpiDisplaySceneBuilder.h:49:7:virtual StringObject::~StringObject()	16	static

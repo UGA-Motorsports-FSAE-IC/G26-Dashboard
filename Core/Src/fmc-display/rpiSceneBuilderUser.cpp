@@ -36,26 +36,27 @@ char oilpressureresult[20] = "";
 char wslabel[20] = "WS ";
 char wsresult[50] = "";
 
-DisplayObject* otherobjects[50] = {
-		new StringObject(200, 260, 0xFFFF, FREE_MONO_BOLD_24PT7B, NO_CENTER_OBJECT, rpmresult, 1),
-		new StringObject(350, 100, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, tempresult, 3),
-		new StringObject(350, 60, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, battresult, 6),
-		new StringObject(100, 240, 0xFFFF, GEARFONT, CENTER_OBJECT, gearresult, 2),
-		new StringObject(395, 130, 0xFFFF, ICONFONT, CENTER_OBJECT, tempicon, 4),
+DisplayObject* mainObjects[50] = {
+		new OutlineRectObject(190, 250, 260, 55, 0xFFFF, NO_CENTER_OBJECT, 5),
+		new StringObject(395, 130, 0xFFFF, ICONFONT, CENTER_OBJECT, tempicon, 5),
 		new StringObject(400, 90, 0xFFFF, ICONFONT, CENTER_OBJECT, batticon, 5),
-		new StringObject(375, 185, 0xFFFF, FREE_SANS_18PT7B, LEFTDRAW_OBJECT, speedresult, 7),
-		new StringObject(440, 288, 0xFFFF, ICONFONT, LEFTDRAW_OBJECT, rpmicon, 8),
-		new OutlineRectObject(190, 250, 260, 55, 0xFFFF, NO_CENTER_OBJECT, 9),
-		new StringObject(405, 210, 0xFFFF, ICONFONT, CENTER_OBJECT, speedicon, 10),
-		new StringObject(50, 280, 0x003A, FREE_SERIF_BOLD_ITALIC_18PT7B, CENTER_OBJECT, name, 11),
-		new StringObject(150, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, airtanklabel, 12),
-		new StringObject(40, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, airtankresult, 13),
-		new StringObject(160, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, sparkcutlabel, 14),
-		new StringObject(40, 20, 0x3f07, FREE_SANS_18PT7B, CENTER_OBJECT, sparkcutstate, 15),
-		new StringObject(400, 145, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, oilpressurelabel, 16),
-		new StringObject(350, 145, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, oilpressureresult, 17),
-		new StringObject(340, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, wsresult, 18),
-		new StringObject(440, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, wslabel, 19),
+		new StringObject(440, 288, 0xFFFF, ICONFONT, LEFTDRAW_OBJECT, rpmicon, 5),
+		new StringObject(405, 210, 0xFFFF, ICONFONT, CENTER_OBJECT, speedicon, 5),
+		new StringObject(150, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, airtanklabel, 5),
+		new StringObject(400, 145, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, oilpressurelabel, 5),
+		new StringObject(440, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, wslabel, 5),
+};
+
+DisplayObject* activeObjects[50] = {
+		new StringObject(50, 280, 0x003A, FREE_SERIF_BOLD_ITALIC_18PT7B, CENTER_OBJECT, name, 10),
+		new StringObject(200, 260, 0xFFFF, FREE_MONO_BOLD_24PT7B, NO_CENTER_OBJECT, rpmresult, 10),
+		new StringObject(350, 100, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, tempresult, 10),
+		new StringObject(350, 60, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, battresult, 10),
+		new StringObject(100, 240, 0xFFFF, GEARFONT, CENTER_OBJECT, gearresult, 10),
+		new StringObject(375, 185, 0xFFFF, FREE_SANS_18PT7B, LEFTDRAW_OBJECT, speedresult, 10),
+		new StringObject(340, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, wsresult, 10),
+		new StringObject(350, 145, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, oilpressureresult, 10),
+		new StringObject(40, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, airtankresult, 10)
 };
 
 Scene myScene2(otherobjects, 19);
@@ -72,70 +73,6 @@ char gear2[15] = "Gear:";
 char* datascreengrid[] = {rpm2, oiltemp2, gear2, batt2};
 char* griddata[] = {rpmresult2, oiltempresult2, gearresult2, battresult2};
 DisplayObject* dataobjects[12];
-Scene myScene3(dataobjects, 12);
-
-
-
-
-void changebackground(uint16_t color) {
-	((FilledRectObject*)otherobjects[10])->updateRect(100, 100, 200, 150, color, CENTER_OBJECT);
-}
-
-void setrpmdata(char *rpmvalue) {
-	strncpy(rpmresult, "", 10);
-	strncat(rpmresult, rpmvalue, 10);
-	((StringObject*)otherobjects[0])->updateString(rpmresult, NO_CENTER_OBJECT, 0xFFFF, FREE_MONO_BOLD_24PT7B, 200, 260, 1);
-}
-
-void settempdata(char *tempvalue) {
-	strncpy(tempresult, "", 10);
-	strncat(tempresult, tempvalue, 10);
-	((StringObject*)otherobjects[1])->updateString(tempresult, CENTER_OBJECT, 0xFFFF, FREE_SANS_18PT7B, 350, 100, 3);
-
-}
-
-void setgeardata(char *gearvalue) {
-	strncpy(gearresult, "", 10);
-	strncat(gearresult, gearvalue, 10);
-	((StringObject*)otherobjects[3])->updateString(gearresult, CENTER_OBJECT, 0xFFFF, GEARFONT, 100, 240, 2);
-}
-
-void setbattdata(char *battvalue) {
-	strncpy(battresult, "", 10);
-	strncat(battresult, battvalue, 10);
-	((StringObject*)otherobjects[2])->updateString(battresult, CENTER_OBJECT, 0xFFFF, FREE_SANS_18PT7B, 350, 60, 6);
-}
-
-void setspeeddata(char *speedvalue) {
-	strncpy(speedresult, "", 10);
-	strncat(speedresult, speedvalue, 10);
-	((StringObject*)otherobjects[6])->updateString(speedresult, LEFTDRAW_OBJECT, 0xFFFF, FREE_SANS_18PT7B, 375, 185, 7);
-}
-
-void setsparkcut(char *sparkcutvalue, uint16_t color) {
-	strncpy(sparkcutstate, "", 10);
-	strncat(sparkcutstate, sparkcutvalue, 10);
-	((StringObject*)otherobjects[14])->updateString(sparkcutstate, CENTER_OBJECT, color, FREE_SANS_18PT7B, 40, 20, 15);
-}
-
-
-void setairtankdata(char *airtankvalue) {
-	strncpy(airtankresult, "", 10);
-	strncat(airtankresult, airtankvalue, 10);
-	((StringObject*)otherobjects[12])->updateString(airtankresult, CENTER_OBJECT, 0xFFFF, FREE_SANS_18PT7B, 40, 20, 13);
-}
-
-void setoilpressuredata(char *oilpressurevalue) {
-	strncpy(oilpressureresult, "", 10);
-	strncat(oilpressureresult, oilpressurevalue, 10);
-	((StringObject*)otherobjects[16])->updateString(oilpressureresult, CENTER_OBJECT, 0xFFFF, FREE_SANS_18PT7B, 350, 145, 17);
-}
-
-void setwheelspeeddata(char *wsvalues) {
-	strncpy(wsresult, "", 10);
-	strncat(wsresult, wsvalues, 32);
-	((StringObject*)otherobjects[17])->updateString(wsresult, CENTER_OBJECT, 0xFFFF, FREE_SANS_18PT7B, 340, 20, 18);
-}
 
 void domainscreen() {
 	myScene2.setScene(otherobjects, 19);

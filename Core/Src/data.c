@@ -40,15 +40,6 @@ extern uint8_t shiftCommand;
 void lcdInit() {
     resetScreen();
     initializeScreen();
-    settempdata(temp);
-    setgeardata(gear);
-    setrpmdata(rpm);
-    setbattdata(batt);
-    setspeeddata(speed);
-    setairtankdata(airtank);
-    //setshiftcountdata(shiftcount);
-    setoilpressuredata(oilpressure);
-    setwheelspeeddata(ws);
     domainscreen();
 }
 
@@ -131,9 +122,8 @@ void processCAN(int id, uint8_t *data) {
 
         case OILPRESSURECANID: {
 			uint16_t oilpressureval = ((uint16_t)data[5] << 8) + data[4];
-			//oilpressureval /= 10;
-			//itoa(oilpressureval, oilpressure, 10);
-			oilpressureval = -18.1f + (((oilpressureval / 4096) * 5) - .5f) * 45.3f;
+			uint16_t voltage = (oilpressureval / 4096.0f) * 5;
+			oilpressureval = -18.1f + (voltage * 36.24f);
 			itoa(oilpressureval, oilpressure, 10);
 			setoilpressuredata(oilpressure);
 			break;

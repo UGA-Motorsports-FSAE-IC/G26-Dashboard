@@ -2,7 +2,7 @@
  * rpiDisplaySceneBuilder.cpp
  *
  *  Created on: Apr 30, 2025
- *      Author: bhargav
+ *      Author: bhargav and Ryan
  */
 
 #include "rpiDisplaySceneBuilder.h"
@@ -105,6 +105,7 @@ uint8_t DisplayObject::getChangeFlag() {
 
 StringObject::StringObject(uint16_t xpos, uint16_t ypos, uint16_t colorvalue, const GFXfont *font, uint8_t positioning, char* buffer, uint8_t priority) {
 	this->buffer = buffer;
+	this->bufferSize = 10;
 	this->setxpos(xpos);
 	this->setypos(ypos);
 	this->colorvalue = colorvalue;
@@ -126,6 +127,12 @@ void StringObject::updateString(char* buffer, uint8_t positioning, uint16_t colo
 	this->setxpos(xpos);
 	this->setypos(ypos);
 	this->setpriority(priority);
+	this->redrawObject();
+}
+
+void StringObject::updateText(char* newText) {
+	strncpy(this->buffer, "", this->bufferSize);
+	strncat(this->buffer, newText, this->bufferSize-1);
 	this->redrawObject();
 }
 

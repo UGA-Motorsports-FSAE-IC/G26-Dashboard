@@ -147,7 +147,6 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 
   if ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET) {
 
-
     HAL_FDCAN_GetRxMessage(&hfdcan2, FDCAN_RX_FIFO0, &rxHeader, rxData);
 
     id = rxHeader.Identifier;
@@ -226,6 +225,20 @@ int main(void)
   MX_IWDG1_Init();
   /* USER CODE BEGIN 2 */
 
+  	FDCAN_TxHeaderTypeDef txShiftHeader;
+	uint8_t txData[8] = {0};
+	txData[1] = shiftCounter;
+	txData[0] = shiftCommand;
+
+	txShiftHeader.Identifier = 172;
+	txShiftHeader.IdType = FDCAN_STANDARD_ID;
+	txShiftHeader.TxFrameType = FDCAN_DATA_FRAME;
+	txShiftHeader.DataLength = FDCAN_DLC_BYTES_8;
+	txShiftHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
+	txShiftHeader.BitRateSwitch = FDCAN_BRS_OFF;
+	txShiftHeader.FDFormat = FDCAN_CLASSIC_CAN;
+	txShiftHeader.MessageMarker = 0;
+
 	canfilter.IdType = FDCAN_STANDARD_ID;
 	canfilter.FilterIndex = 0;
 	canfilter.FilterType = FDCAN_FILTER_MASK;
@@ -258,23 +271,9 @@ int main(void)
 	  HAL_IWDG_Refresh(&hiwdg1);
 
 	  if (checkShift() && timerBool == 1) {
-		FDCAN_TxHeaderTypeDef txShiftHeader;
-		uint8_t txData[8] = {0};
-		txData[2] = sparkCutCommand;
-		txData[1] = shiftCounter;
 		txData[0] = shiftCommand;
-
-		txShiftHeader.Identifier = 172;
-		txShiftHeader.IdType = FDCAN_STANDARD_ID;
-		txShiftHeader.TxFrameType = FDCAN_DATA_FRAME;
-		txShiftHeader.DataLength = FDCAN_DLC_BYTES_8;
-		txShiftHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-		txShiftHeader.BitRateSwitch = FDCAN_BRS_OFF;
-		txShiftHeader.FDFormat = FDCAN_CLASSIC_CAN;
-		txShiftHeader.MessageMarker = 0;
-
+		txData[1] = shiftCounter;
 		HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txShiftHeader, txData);
-
 		timerBool = 0;
 	  }
 

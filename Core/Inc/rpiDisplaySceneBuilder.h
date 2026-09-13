@@ -51,9 +51,11 @@ public:
 	StringObject(uint16_t xpos, uint16_t ypos, uint16_t colorvalue, const GFXfont *font, uint8_t positioning, char* buffer, uint8_t priority);
 	uint16_t drawIntoFramebuffer(uint16_t *framebuffer, uint16_t framewidth, uint16_t xstart) override;
 	void updateString(char* buffer, uint8_t positioning, uint16_t colorvalue, const GFXfont *font, uint16_t xpos, uint16_t ypos, uint8_t priority);
+	void updateText(char* newText);
 private:
 	uint16_t colorvalue;
 	char* buffer;
+	uint16_t bufferSize;
 	const GFXfont *font;
 	uint8_t positioning;
 };
