@@ -130,10 +130,8 @@ void processCAN(int id, uint8_t *data) {
         */
 
         case OILPRESSURECANID: {
-			uint16_t oilpressureval = ((uint16_t)data[5] << 8) + data[4];
-			//oilpressureval /= 10;
-			//itoa(oilpressureval, oilpressure, 10);
-			oilpressureval = -18.1f + (((oilpressureval / 4096) * 5) - .5f) * 45.3f;
+			uint16_t oilpressureval = ((uint16_t)data[2] << 8) + data[3];
+			oilpressureval /= 10;
 			itoa(oilpressureval, oilpressure, 10);
 			setoilpressuredata(oilpressure);
 			break;
