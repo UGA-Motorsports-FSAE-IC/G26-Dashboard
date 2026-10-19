@@ -20,6 +20,10 @@ Scene::Scene(DisplayObject** objects, uint8_t count) {
 	this->setScene(objects, count);
 }
 
+void Scene::setCount(uint8_t count) {
+	this->objectcount = count;
+}
+
 void Scene::setScene(DisplayObject** objects, uint8_t count) {
 	this->objects = objects;
 	this->objectcount = count;

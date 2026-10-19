@@ -2,7 +2,7 @@
  * rpiSceneBuilderUser.cpp
  *
  *  Created on: May 2, 2025
- *      Author: bhargav
+ *      Author: Bhargav and Ryan
  */
 
 #include "rpiSceneBuilderUser.h"
@@ -36,17 +36,6 @@ char oilpressureresult[20] = "";
 char wslabel[20] = "WS ";
 char wsresult[50] = "";
 
-DisplayObject* mainObjects[50] = {
-		new OutlineRectObject(190, 250, 260, 55, 0xFFFF, NO_CENTER_OBJECT, 5),
-		new StringObject(395, 130, 0xFFFF, ICONFONT, CENTER_OBJECT, tempicon, 5),
-		new StringObject(400, 90, 0xFFFF, ICONFONT, CENTER_OBJECT, batticon, 5),
-		new StringObject(440, 288, 0xFFFF, ICONFONT, LEFTDRAW_OBJECT, rpmicon, 5),
-		new StringObject(405, 210, 0xFFFF, ICONFONT, CENTER_OBJECT, speedicon, 5),
-		new StringObject(150, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, airtanklabel, 5),
-		new StringObject(400, 145, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, oilpressurelabel, 5),
-		new StringObject(440, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, wslabel, 5),
-};
-
 DisplayObject* activeObjects[50] = {
 		new StringObject(50, 280, 0x003A, FREE_SERIF_BOLD_ITALIC_18PT7B, CENTER_OBJECT, name, 10),
 		new StringObject(200, 260, 0xFFFF, FREE_MONO_BOLD_24PT7B, NO_CENTER_OBJECT, rpmresult, 10),
@@ -59,7 +48,20 @@ DisplayObject* activeObjects[50] = {
 		new StringObject(40, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, airtankresult, 10)
 };
 
-Scene myScene2(otherobjects, 19);
+
+DisplayObject* mainObjects[50] = {
+		new OutlineRectObject(190, 250, 260, 55, 0xFFFF, NO_CENTER_OBJECT, 5),
+		new StringObject(395, 130, 0xFFFF, ICONFONT, CENTER_OBJECT, tempicon, 5),
+		new StringObject(400, 90, 0xFFFF, ICONFONT, CENTER_OBJECT, batticon, 5),
+		new StringObject(440, 288, 0xFFFF, ICONFONT, LEFTDRAW_OBJECT, rpmicon, 5),
+		new StringObject(405, 210, 0xFFFF, ICONFONT, CENTER_OBJECT, speedicon, 5),
+		new StringObject(150, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, airtanklabel, 5),
+		new StringObject(400, 145, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, oilpressurelabel, 5),
+		new StringObject(440, 20, 0xFFFF, FREE_SANS_18PT7B, CENTER_OBJECT, wslabel, 5),
+};
+
+Scene mainScene(mainObjects, 10);
+Scene engineScene(engineObjects, 10);
 
 
 char rpmresult2[17] = "";
@@ -75,16 +77,12 @@ char* griddata[] = {rpmresult2, oiltempresult2, gearresult2, battresult2};
 DisplayObject* dataobjects[12];
 
 void domainscreen() {
-	myScene2.setScene(otherobjects, 19);
+	myScene2.setScene(mainCbjects, sizeof(mainObjects) / sizeof(mainObjects[0]));
 	myScene2.drawScene();
 }
 
-void dodatascreen() {
-	myScene3.setScene(dataobjects, 12);
-	myScene3.drawScene();
-}
 
-
+/*
 void initdatascreen() {
 	int length = sizeof(datascreengrid) / sizeof(datascreengrid[0]);
 	int x = 0;
@@ -108,7 +106,7 @@ void initdatascreen() {
 	dodatascreen();
 }
 
-/*
+
 char *image = "splash.bin";
 DisplayObject* splashobjects[1] = {
 		new ImageObject(image, SPLASH_LENGTH, SPLASH_HEIGHT, 240, 160, CENTER_OBJECT, 2)

@@ -50,7 +50,6 @@ void processCAN(int id, uint8_t *data) {
             rpmVal = ((uint16_t)data[6] << 8) + data[7];
             UpdateShiftLights(&htim2, TIM_CHANNEL_1, ledcolors, ledbytes, rpmVal, G1);
             itoa(rpmVal, rpm, 10);
-            setrpmdata(rpm);
             break;
         }
 
@@ -58,7 +57,6 @@ void processCAN(int id, uint8_t *data) {
             uint16_t speedVal = ((uint16_t)data[0] << 8) | data[1];
             speedVal /= 10;
             itoa(speedVal, speed, 10);
-            setspeeddata(speed);
             break;
         }
 
@@ -66,7 +64,6 @@ void processCAN(int id, uint8_t *data) {
             uint16_t gearVal = ((uint16_t)data[3] << 8) | data[2];
             int gearNum = calculateGear(gearVal);
             itoa(gearNum, gear, 10);
-            setgeardata(gear);
             break;
         }
 
@@ -79,7 +76,6 @@ void processCAN(int id, uint8_t *data) {
             	setColor(&htim2, TIM_CHANNEL_1, 0, 0, 0, ledcolors, ledbytes, 15);
             }
             itoa(tempVal, temp, 10);
-            settempdata(temp);
             break;
         }
 
@@ -95,7 +91,6 @@ void processCAN(int id, uint8_t *data) {
             strncat(batt, batint, 5);
             strncat(batt, ".", 5);
             strncat(batt, batdec, 1);
-            setbattdata(batt);
             break;
         }
 
@@ -104,7 +99,6 @@ void processCAN(int id, uint8_t *data) {
         	float volts = adc * (5.0f / 4096.0f);
         	float airtankval = (volts * 1250.0f) - 625.0f;
         	itoa(airtankval, airtank, 10);
-        	setairtankdata(airtank);
         	break;
         }
         /*
@@ -125,7 +119,6 @@ void processCAN(int id, uint8_t *data) {
 			uint16_t voltage = (oilpressureval / 4096.0f) * 5;
 			oilpressureval = -18.1f + (voltage * 36.24f);
 			itoa(oilpressureval, oilpressure, 10);
-			setoilpressuredata(oilpressure);
 			break;
 		}
 
@@ -141,7 +134,6 @@ void processCAN(int id, uint8_t *data) {
 			strncat(ws, ".", 5);
 			strncat(ws, wsdec, 2);
 			*/
-        	setwheelspeeddata(ws);
         	break;
         }
     }

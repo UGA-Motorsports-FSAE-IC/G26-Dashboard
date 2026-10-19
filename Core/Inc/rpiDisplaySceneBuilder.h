@@ -37,6 +37,7 @@ class Scene {
 public:
 	Scene(DisplayObject **objects, uint8_t count);
 	void setScene(DisplayObject **objects, uint8_t count);
+	void setCount(uint8_t count);
 	void drawScene();
 private:
 	DisplayObject **objects;
