@@ -46,7 +46,6 @@ void lcdInit() {
     setbattdata(batt);
     setspeeddata(speed);
     setairtankdata(airtank);
-    //setshiftcountdata(shiftcount);
     setoilpressuredata(oilpressure);
     setwheelspeeddata(ws);
     domainscreen();
@@ -130,7 +129,7 @@ void processCAN(int id, uint8_t *data) {
         */
 
         case OILPRESSURECANID: {
-			uint16_t oilpressureval = ((uint16_t)data[2] << 8) + data[3];
+			uint16_t oilpressureval = ((uint16_t)data[4] << 8) + data[5];
 			oilpressureval /= 10;
 			itoa(oilpressureval, oilpressure, 10);
 			setoilpressuredata(oilpressure);
@@ -138,7 +137,11 @@ void processCAN(int id, uint8_t *data) {
 		}
 
         case WSCANID: {
-        	snprintf(ws, sizeof(ws), "%u.%u %u.%u", data[2], data[3], data[4], data[5]);
+        	int wheels[4];
+        	for (int i = 0; i < 4; i++) {
+        		memcpy(&wheels[i], &data[i*4], sizeof(float));
+        	}
+        	snprintf(ws, sizeof(ws), "%d %d %d %d", wheels[0], wheels[1], wheels[2], wheels[3]);
         	/*
         	char wsint[10];
         	char wsdec[10];

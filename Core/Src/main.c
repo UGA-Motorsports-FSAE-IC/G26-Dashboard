@@ -139,7 +139,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 FDCAN_FilterTypeDef canfilter;
 
 FDCAN_RxHeaderTypeDef rxHeader;
-uint8_t rxData[8];
+uint8_t rxData[16];
 volatile uint8_t dataRecieved = 0;
 uint32_t id;
 
@@ -432,7 +432,7 @@ static void MX_FDCAN2_Init(void)
 
   /* USER CODE END FDCAN2_Init 1 */
   hfdcan2.Instance = FDCAN2;
-  hfdcan2.Init.FrameFormat = FDCAN_FRAME_CLASSIC;
+  hfdcan2.Init.FrameFormat = FDCAN_FRAME_FD_NO_BRS;
   hfdcan2.Init.Mode = FDCAN_MODE_NORMAL;
   hfdcan2.Init.AutoRetransmission = DISABLE;
   hfdcan2.Init.TransmitPause = DISABLE;
